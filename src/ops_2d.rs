@@ -39,8 +39,23 @@ pub fn dot_product_2d(a: &Tensor, b: &Tensor) -> Tensor {
  * Tensor - The normalized tensor [N, C, H, W]
  */
 pub fn normalize_2d(a: &Tensor) -> Tensor {
-  let typ = a.kind();
-  a / (a.linalg_norm(2, vec![1].as_slice(), true, typ) + 1e-8)
+  a / (norm_2d(a) + 1e-8)
+}
+
+/**
+ * Compute the norm of vectors in 2d pictures. Equivalent to `linalg_norm` but faster.
+ * 
+ * # Arguments
+ * - t: Tensor - The tensor to compute the norm [N, C, H, W]
+ * 
+ * # Returns
+ * Tensor - The norm of the vectors [N, 1, H, W]
+ */
+pub fn norm_2d(t: &Tensor) -> Tensor {
+  let typ = t.kind();
+  (t.pow_tensor_scalar(2.0))
+    .sum_dim_intlist(vec![1].as_slice(), true, typ)
+    .sqrt()
 }
 
 /**
