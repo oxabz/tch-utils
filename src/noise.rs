@@ -111,7 +111,7 @@ pub fn perlin_noise_2d(
   let grid = normalize_2d(&grid);
 
   // Generate a tensor of positions [N, 2, H, W]
-  let pos = position_tensor_2d((w, h), n, (tch::Kind::Float, tch::Device::Cpu));
+  let pos = position_tensor_2d((w, h), n, (tch::Kind::Float, device));
   let offset_x = 1.0 / w as f64;
   let offset_y = 1.0 / h as f64;
   let pos = translate_2d(&pos, &[offset_y, offset_x]);
