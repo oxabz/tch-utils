@@ -82,6 +82,29 @@ pub fn scale_2d(t: &Tensor, scale: &[f64]) -> Tensor {
 }
 
 /**
+ * Rotate the of vectors in 2d pictures.
+ * 
+ * # Arguments
+ * t: Tensor - The tensor to rotate [N, 2, H, W]
+ * angle: f64 - The angle of rotation in radians
+ * 
+ * # Returns
+ * Tensor - The rotated tensor [N, 2, H, W]
+ */
+pub fn rotate_2d(t: &Tensor, angle: f64) -> Tensor {
+  let typ = t.kind();
+  let device = t.device();
+  let cos = angle.cos();
+  let sin = angle.sin();
+  let rotation = Tensor::of_slice(&[cos, -sin, sin, cos])
+    .to_kind(typ)
+    .to_device(device)
+    .view([2, 2]);
+  
+  t.transpose(1,3).matmul(&rotation).transpose(1,3)
+}
+
+/**
  * Translate the of vectors in 2d pictures.
  *
  * # Arguments
