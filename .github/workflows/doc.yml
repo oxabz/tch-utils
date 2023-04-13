@@ -1,10 +1,12 @@
 # Simple workflow for deploying static content to GitHub Pages
-name: Deploy static content to Pages
-
+name: Deploy crate doc to pages
 on:
   # Runs on pushes targeting the default branch
   push:
     branches: ["main"]
+    paths:
+    - src
+    - Cargo.toml
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -34,7 +36,10 @@ jobs:
       - name: Building Doc
         run: cargo doc
       - name: Adding index
-        run: echo "<head> <meta http-equiv="refresh" content="0;URL=https://oxabz.github.io/tch-utils/tch_utils/index.html"> </head>" > ./target/doc/index.html
+        run: | 
+          touch ./target/doc/index.html
+          echo '<head><meta http-equiv="refresh" content="0;URL=https://oxabz.github.io/tch-utils/tch_utils/index.html"></head><body><a href="https://oxabz.github.io/tch-utils/tch_utils/index.html">redirection failed please click here</a></body>' > ./target/doc/index.html
+          cat ./target/doc/index.html
       - name: Setup Pages
         uses: actions/configure-pages@v3
       - name: Upload artifact
