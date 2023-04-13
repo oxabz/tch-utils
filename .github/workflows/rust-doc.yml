@@ -25,8 +25,8 @@ jobs:
     - name: Build Doc
       run: cargo doc --verbose
     - name: Deploy 🚀
-        uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          folder: target/doc
-          branch: docs
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: target/doc
+        branch: docs
     
