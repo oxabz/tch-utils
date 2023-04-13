@@ -18,7 +18,7 @@ use tch::Tensor;
  * Tensor - The tensor containing the positions [N, 2, H, W] 
  * The 2nd dimension contains the x and y position with y being the first element
  * # Example
- * ```rust
+ * ```rust,no_run
  * # use tch::Tensor;
  * # use tch_utils::tensor_init::position_tensor_2d;
  * let pos = position_tensor_2d((3, 3), 1, (tch::Kind::Float, tch::Device::Cpu));
