@@ -15,11 +15,23 @@ use tch::Tensor;
  * options: (tch::Kind, tch::Device) - The kind and device of the tensor
  *
  * # Returns
- * Tensor - The tensor containing the positions [N, 2, H, W]
- *
+ * Tensor - The tensor containing the positions [N, 2, H, W] 
+ * The 2nd dimension contains the x and y position with y being the first element
  * # Example
  * ```rust
- * position_tensor_2d((200, 100), 1, (tch::Kind::Float, tch::Device::Cpu));
+ * # use tch::Tensor;
+ * # use tch_utils::tensor_init::position_tensor_2d;
+ * let pos = position_tensor_2d((3, 3), 1, (tch::Kind::Float, tch::Device::Cpu));
+ * let expected = Tensor::of_slice(&[
+ *  -1.0, -1.0, -1.0,
+ *  0.0, 0.0, 0.0,
+ *  1.0, 1.0, 1.0,
+ *  -1.0, 0.0, 1.0,
+ *  -1.0, 0.0, 1.0,
+ *  -1.0, 0.0, 1.0,
+ * ]).view([1, 2, 3, 3]);
+ * eprintln!("pos: {:?}", Vec::<f64>::from(&pos));
+ * assert!(f64::from((pos - expected).abs().sum(tch::Kind::Float)) < 1e-6);
  * ```
  */
 pub fn position_tensor_2d(
@@ -37,7 +49,7 @@ pub fn position_tensor_2d(
   let pos_y = pos_y.repeat(&[w as i64, 1]).transpose(0, 1);
 
   let pos = Tensor::stack(&[pos_y, pos_x], 0)
-    / Tensor::of_slice(&[h as f64 * 0.5, w as f64 * 0.5])
+    / Tensor::of_slice(&[(h - 1) as f64 * 0.5, (w - 1) as f64 * 0.5])
       .to_device(device)
       .to_kind(kind)
       .view([2, 1, 1]);

@@ -19,9 +19,12 @@ use tch::Tensor;
  *
  * # Example
  * ```rust
+ * # use tch::Tensor;
+ * # use tch_utils::ops_2d::dot_product_2d;
  * let a = Tensor::of_slice(&[1.0, 2.0, 3.0, 4.0]).view([1, 2, 2, 1]);
  * let b = Tensor::of_slice(&[1.0, 2.0, 3.0, 4.0]).view([1, 2, 2, 1]);
- * dot_product_2d(a, b);
+ * let dot = dot_product_2d(&a, &b);
+ * assert!(dot.equal(&Tensor::of_slice(&[10.0, 20.0]).view([1, 1, 2, 1])));
  * ```
  */
 pub fn dot_product_2d(a: &Tensor, b: &Tensor) -> Tensor {
