@@ -3,6 +3,8 @@
  */
 
 use tch::{Kind, Device, Tensor};
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
 
 /**
  * Generate an ellipse distance field.
@@ -65,6 +67,163 @@ pub fn ellipse(
     (df.lt(0.0)).to_kind(kind)
 }
 
+/**
+ * Generate a circle. (wrapper around ellipse)
+ * 
+ * # Arguments
+ * - width: usize - The width of the image
+ * - height: usize - The height of the image
+ * - center: (f64, f64) - The center of the circle
+ * - radius: f64 - The radius of the circle
+ * 
+ * # Returns
+ * Tensor - The circle [1, H, W] tensor with value resulting from casting a boolean to the given kind
+ */
+pub fn circle(
+    width: usize,
+    height: usize,
+    center: (f64, f64),
+    radius: f64,
+    options: (Kind, Device),
+) -> Tensor {
+    ellipse(width, height, center, (radius, radius), 0.0, options)
+}
+
+
+fn use_segment(seg: Segment, y:f64) -> bool {
+    let ((_, y1), (_, y2), _, _) = seg;
+    y1 <= y && y2 > y || y1 > y && y2 <= y
+}
+
+type Segment = ((f64, f64), (f64, f64), f64, f64);
+
+/** 
+ * Generate a mask from a polygon using the scaning method 
+ * 
+ * # Arguments
+ * width - The width of the image
+ * height - The height of the image
+ * polygon - The polygon to generate the mask from coordinates in the form of [(x1, y1), (x2, y2), ...]
+ *         where [0, 0] is the center of the image and the coordinates are in pixels
+ * options - The kind and device to cast the mask to
+ */
+pub fn polygon(
+    width: usize,
+    height: usize,
+    polygon: &Vec<(f64, f64)>,
+    options: (Kind, Device),
+) -> Tensor {
+    // Building the segments and storing the parametric representation of each segment
+    let mut segments = vec![];
+    for i in 0..polygon.len() {
+        let p1 = polygon[i];
+        let p2 = polygon[(i+1) % polygon.len()];
+        let a = (p1.1 - p2.1) / (p1.0 - p2.0 + 1e-6); // Adding a small value to avoid division by 0 when the segment is vertical
+        let b = p1.1 - a * p1.0;
+        segments.push((p1, p2, a, b));
+    }
+    let segments = segments;
+
+
+    #[cfg(feature = "rayon")]
+    let iter = (0..height).into_par_iter();
+    #[cfg(not(feature = "rayon"))]
+    let iter = (0..height).into_iter();
+
+    let mask = iter.map(|y| {
+        let y = y as f64 - height as f64 / 2.0;
+        let mut intersections : Vec<_> = segments.iter()
+            .filter(|segment| use_segment(**segment, y))
+            .map(|segment| {
+                let ((x1, _), (x2, _), a, b) = segment;
+                if a.abs() < 1e-6 {
+                    (*x1 + *x2) / 2.0
+                } else {
+                    (y as f64 - b) / a
+                }
+            }).collect();
+        intersections.sort_by(|a, b| a.partial_cmp(b).unwrap());
+
+        let mut column = vec![0u8; width];
+        for i in (0..intersections.len()).step_by(2) {
+            let x1 = (intersections[i].round() as usize + width/2).clamp(0, width-1);
+            let x2 = (intersections[i+1].round() as usize + width/2).clamp(0, width-1);
+            for x in x1..x2 {
+                column[x] = 1u8;
+            }
+        }
+        column
+    }).flatten().collect::<Vec<u8>>();
+    let mask = Tensor::of_slice(&mask).view([1, height as i64, width as i64]);
+    mask.to_kind(options.0).to_device(options.1)
+}
+
+
+fn convex_hull_segments(points: &[(f64, f64)]) -> Vec<Segment> {
+    let mut segments = vec![];
+    for i in 0..points.len() {
+        for j in i..points.len() {
+            let p1 = points[i];
+            let p2 = points[j];
+            let a = (p1.1 - p2.1) / (p1.0 - p2.0 + 1e-6); // Adding a small value to avoid division by 0 when the segment is vertical
+            let b = p1.1 - a * p1.0;
+            segments.push((p1, p2, a, b));
+        }
+    }
+    segments
+}
+
+/**
+ * Generate a mask of the convex hull of a set of points
+ * 
+ * # Arguments
+ * width - The width of the image
+ * height - The height of the image
+ * points - The points to generate the mask from coordinates in the form of [(x1, y1), (x2, y2), ...]
+ *          where [0, 0] is the center of the image and the coordinates are in pixels
+ * options - The kind and device to cast the mask to
+ */
+pub fn convex_hull(
+    width: usize,
+    height: usize,
+    points: &Vec<(f64, f64)>,
+    options: (Kind, Device),
+) -> Tensor {
+    let segments = convex_hull_segments(points);
+    
+    #[cfg(feature = "rayon")]
+    let iter = (0..height).into_par_iter();
+    #[cfg(not(feature = "rayon"))]
+    let iter = (0..height).into_iter();
+
+    let mask = iter.map(|y| {
+        let y = y as f64 - height as f64 / 2.0;
+        let intersections : Vec<_> = segments.iter()
+            .filter(|segment| use_segment(**segment, y))
+            .map(|segment| {
+                let ((x1, _), (x2, _), a, b) = segment;
+                if a.abs() < 1e-6 {
+                    (*x1 + *x2) / 2.0
+                } else {
+                    (y as f64 - b) / a
+                }
+            }).collect();
+        let max = intersections.iter().max_by(|a, b| a.partial_cmp(b).unwrap()).unwrap();
+        let min = intersections.iter().min_by(|a, b| a.partial_cmp(b).unwrap()).unwrap();
+        let max = (max.round() as usize + width/2).clamp(0, width-1);
+        let min = (min.round() as usize + width/2).clamp(0, width-1);
+
+        let mut column = vec![0u8; width];
+        for i in min..max {
+            column[i] = 1u8;
+        }
+        column
+    }).flatten().collect::<Vec<u8>>();
+    
+    let mask = Tensor::of_slice(&mask).view([1, height as i64, width as i64]);
+    mask.to_kind(options.0).to_device(options.1)
+}
+
 #[cfg(test)]
 mod test{
     use super::*;
@@ -96,4 +255,19 @@ mod test{
         let df = ellipse_distance_field(100, 100, (0.0, 0.0), (1.0, 1.0), 0.0, Device::Cpu);       
         tch::vision::image::save(&df.unsqueeze(0), "test-results/ellipse_df.png").unwrap();
     }
+
+    #[test]
+    fn test_polygon() {
+        let triangle = polygon(100, 100, &vec![(0.0, 0.0), (0.0, 50.0), (50.0, 0.0)], (Kind::Float, Device::Cpu));
+        let square = polygon(100, 100, &vec![(0.0, 0.0), (0.0, 50.0), (50.0, 50.0), (50.0, 0.0)], (Kind::Float, Device::Cpu));
+        let pentagon = polygon(100, 100, &vec![(0.0, 0.0), (0.0, 50.0), (25.0, 50.0), (50.0, 25.0), (50.0, 0.0)], (Kind::Float, Device::Cpu));
+
+        tch::vision::image::save(&(&triangle * 255), "test-results/triangle.png").unwrap();
+        tch::vision::image::save(&(&square * 255), "test-results/square.png").unwrap();
+        tch::vision::image::save(&(&pentagon * 255), "test-results/pentagon.png").unwrap();
+
+
+    }
+
+
 }
