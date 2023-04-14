@@ -136,19 +136,20 @@ pub fn polygon(
                 .filter(|segment| use_segment(**segment, y))
                 .map(|segment| {
                     let ((x1, _), (x2, _), a, b) = segment;
-                    if a.abs() < 1e-6 {
+                    let r = if a.abs() < 1e-6 {
                         (*x1 + *x2) / 2.0
                     } else {
                         (y as f64 - b) / a
-                    }
+                    };
+                    ((r + width as f64 / 2.0).round() as usize).clamp(0, width -1)
                 })
                 .collect();
             intersections.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
             let mut column = vec![0u8; width];
             for i in (0..intersections.len()).step_by(2) {
-                let x1 = (intersections[i].round() as usize + width / 2).clamp(0, width - 1);
-                let x2 = (intersections[i + 1].round() as usize + width / 2).clamp(0, width - 1);
+                let x1 = intersections[i];
+                let x2 = intersections[i + 1];
                 for x in x1..x2 {
                     column[x] = 1u8;
                 }
