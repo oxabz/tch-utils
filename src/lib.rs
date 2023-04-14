@@ -44,3 +44,4 @@ pub mod ops_2d;
 pub mod tensor_init;
 pub mod noise;
 pub mod shapes;
+pub mod utils;
