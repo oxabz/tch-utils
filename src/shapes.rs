@@ -1,5 +1,5 @@
 /*!
- * This module contains functions to generate shapes.
+This module contains functions to generate shapes.
  */
 
 #[cfg(feature = "rayon")]
@@ -7,17 +7,17 @@ use rayon::prelude::*;
 use tch::{Device, Kind, Tensor};
 
 /**
- * Generate an ellipse distance field.
- *
- * # Arguments
- * - width: i64 - The width of the image
- * - height: i64 - The height of the image
- * - center: (f64, f64) - The center of the ellipse
- * - radii: (f64, f64) - The radii of the ellipse
- * - angle: f64 - The angle of the ellipse
- *
- * # Returns
- * Tensor - The ellipse distance field [1, H, W] tensor with values in [0, 1]
+Generate an ellipse distance field.
+
+# Arguments
+- width: i64 - The width of the image
+- height: i64 - The height of the image
+- center: (f64, f64) - The center of the ellipse
+- radii: (f64, f64) - The radii of the ellipse
+- angle: f64 - The angle of the ellipse
+
+# Returns
+Tensor - The ellipse distance field [1, H, W] tensor with values in [0, 1]
  */
 fn ellipse_distance_field(
     width: usize,
@@ -42,17 +42,17 @@ fn ellipse_distance_field(
 }
 
 /**
- * Generate an ellipse.
- *
- * # Arguments
- * - width: usize - The width of the image
- * - height: usize - The height of the image
- * - center: (f64, f64) - The center of the ellipse
- * - radii: (f64, f64) - The radii of the ellipse
- * - angle: f64 - The angle of the ellipse
- *
- * # Returns
- * Tensor - The ellipse [1, H, W] tensor with value resulting from casting a boolean to the given kind
+Generate an ellipse.
+
+# Arguments
+- width: usize - The width of the image
+- height: usize - The height of the image
+- center: (f64, f64) - The center of the ellipse
+- radii: (f64, f64) - The radii of the ellipse
+- angle: f64 - The angle of the ellipse
+
+# Returns
+Tensor - The ellipse [1, H, W] tensor with value resulting from casting a boolean to the given kind
  */
 pub fn ellipse(
     width: usize,
@@ -68,16 +68,16 @@ pub fn ellipse(
 }
 
 /**
- * Generate a circle. (wrapper around ellipse)
- *
- * # Arguments
- * - width: usize - The width of the image
- * - height: usize - The height of the image
- * - center: (f64, f64) - The center of the circle
- * - radius: f64 - The radius of the circle
- *
- * # Returns
- * Tensor - The circle [1, H, W] tensor with value resulting from casting a boolean to the given kind
+Generate a circle. (wrapper around ellipse)
+
+# Arguments
+- width: usize - The width of the image
+- height: usize - The height of the image
+- center: (f64, f64) - The center of the circle
+- radius: f64 - The radius of the circle
+
+# Returns
+Tensor - The circle [1, H, W] tensor with value resulting from casting a boolean to the given kind
  */
 pub fn circle(
     width: usize,
@@ -97,14 +97,14 @@ fn use_segment(seg: Segment, y: f64) -> bool {
 type Segment = ((f64, f64), (f64, f64), f64, f64);
 
 /**
- * Generate a mask from a polygon using the scaning method
- *
- * # Arguments
- * width - The width of the image
- * height - The height of the image
- * polygon - The polygon to generate the mask from coordinates in the form of [(x1, y1), (x2, y2), ...]
- *         where [0, 0] is the center of the image and the coordinates are in pixels
- * options - The kind and device to cast the mask to
+Generate a mask from a polygon using the scaning method
+
+# Arguments
+width - The width of the image
+height - The height of the image
+polygon - The polygon to generate the mask from coordinates in the form of [(x1, y1), (x2, y2), ...]
+        where [0, 0] is the center of the image and the coordinates are in pixels
+options - The kind and device to cast the mask to
  */
 pub fn polygon(
     width: usize,
@@ -176,14 +176,14 @@ fn convex_hull_segments(points: &[(f64, f64)]) -> Vec<Segment> {
 }
 
 /**
- * Generate a mask of the convex hull of a set of points
- *
- * # Arguments
- * width - The width of the image
- * height - The height of the image
- * points - The points to generate the mask from coordinates in the form of [(x1, y1), (x2, y2), ...]
- *          where [0, 0] is the center of the image and the coordinates are in pixels
- * options - The kind and device to cast the mask to
+Generate a mask of the convex hull of a set of points
+
+# Arguments
+width - The width of the image
+height - The height of the image
+points - The points to generate the mask from coordinates in the form of [(x1, y1), (x2, y2), ...]
+         where [0, 0] is the center of the image and the coordinates are in pixels
+options - The kind and device to cast the mask to
  */
 pub fn convex_hull(
     width: usize,

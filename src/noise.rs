@@ -1,7 +1,7 @@
 /*!
- * # Noise
- * 
- * This module contains noise functions 
+# Noise
+
+This module contains noise functions 
  */
 
 use rand::{SeedableRng, Rng, distributions};
@@ -73,17 +73,17 @@ fn compute_corner_contribution(
 
 
 /**
- * Generate 2d perlin noise.
- *
- * # Arguments
- * shape: (usize, usize) - The shape of the resulting image
- * n: usize - The number samples generated
- * res: (usize, usize) - The resolution of the noise
- * seed: u64 - The seed for the random number generator
- * options: (tch::Kind, tch::Device) - The kind and device of the resulting tensor
- *
- * # Returns
- * Tensor - The perlin noise [N, 1, H, W]
+Generate 2d perlin noise.
+
+# Arguments
+shape: (usize, usize) - The shape of the resulting image
+n: usize - The number samples generated
+res: (usize, usize) - The resolution of the noise
+seed: u64 - The seed for the random number generator
+options: (tch::Kind, tch::Device) - The kind and device of the resulting tensor
+
+# Returns
+Tensor - The perlin noise [N, 1, H, W]
  */
 pub fn perlin_noise_2d(
   shape: (usize, usize),
