@@ -19,7 +19,7 @@ use tch::{Device, Kind, Tensor};
  * # Returns
  * Tensor - The ellipse distance field [1, H, W] tensor with values in [0, 1]
  */
-pub fn ellipse_distance_field(
+fn ellipse_distance_field(
     width: usize,
     height: usize,
     center: (f64, f64),
@@ -315,12 +315,6 @@ mod test {
             &centered_rotated_ellipse,
             "assert-assets/shapes/centered_rotated_ellipse.pt",
         );
-    }
-
-    #[test]
-    fn test_ellipse_distance_field() {
-        let df = ellipse_distance_field(100, 100, (0.0, 0.0), (1.0, 1.0), 0.0, Device::Cpu);
-        tch::vision::image::save(&df.unsqueeze(0), "test-results/ellipse_df.png").unwrap();
     }
 
     #[test]
