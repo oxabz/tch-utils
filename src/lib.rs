@@ -30,11 +30,13 @@
  * the y axis will always be top to bottom
  * the x axis will always be left to right
  * 
+ * ```no_run
  * 0 ----> 1 (x)
  * |
  * |
  * v
  * 1 
+ * ```
  * (y)
  * 
  * 

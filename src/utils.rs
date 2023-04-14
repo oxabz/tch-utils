@@ -6,7 +6,7 @@ pub fn assert_eq_tensor(a: &Tensor, b: &Tensor) {
     assert!(delta < 1e-5, "Tensors must be equal");
 }
 
-pub(crate)fn assert_tensor_asset(tensor: &Tensor, asset: &str) {
+pub fn assert_tensor_asset(tensor: &Tensor, asset: &str) {
     let asset =Tensor::load(asset).expect("Failed to load asset");
     assert_eq_tensor(tensor, &asset);
 }
