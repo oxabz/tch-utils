@@ -30,16 +30,14 @@ Tensors of 2d vectors ([N, 2, H, W] & [2, H, W]) are in the form [y, x]
 the y axis will always be top to bottom
 the x axis will always be left to right
 
-```no_run
+```ignore
 0 ----> 1 (x)
 |
 |
 v
 1 
-```
 (y)
-
-
+```
  */
 
 pub mod ops_2d;
