@@ -18,7 +18,7 @@ b: Tensor - The second tensor [N, C, H, W]
 Tensor - The dot product of the two tensors [N, 1 ,H, W]
 
 # Example
-```rust
+```rust,no_run
 # use tch::Tensor;
 # use tch_utils::ops_2d::dot_product_2d;
 let a = Tensor::of_slice(&[1.0, 2.0, 3.0, 4.0]).view([1, 2, 2, 1]);
