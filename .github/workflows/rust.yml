@@ -11,6 +11,7 @@ on:
     paths: 
     - src/**
     - Cargo.toml
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
@@ -22,6 +23,27 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Cache Libtorch
+      id: cache-torch
+      uses: actions/cache@v3
+      with:
+        path: libtorch
+        key: ${{ runner.os }}-libtorch
+    - name: Getting Libtorch
+      if: steps.cache-torch.outputs.cache-hit != 'true'
+      run: |
+        curl https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.0.0%2Bcpu.zip -o libtorch.zip -L
+        unzip libtorch.zip
+    - name: Caching Cargo
+      uses: actions/cache@v3
+      with:
+        path: |
+          target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.toml') }}
+    - name: Exporting Env
+      run: |
+        export LIBTORCH=$PWD/libtorch
+        export LD_LIBRARY_PATH=$PWD/libtorch/lib:$LD_LIBRARY_PATH
     - name: Build
       run: cargo build --verbose
     - name: Test
