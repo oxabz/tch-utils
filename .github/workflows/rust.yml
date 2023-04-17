@@ -43,7 +43,7 @@ jobs:
       run: |
         export LIBTORCH=$PWD/libtorch
         export LD_LIBRARY_PATH=$PWD/libtorch/lib:$LD_LIBRARY_PATH
-        sed 's/doctest = true/doctest = false/' **/Cargo.toml
+        sed 's/doctest = true/doctest = false/' ./Cargo.toml
     - name: Build
       run: cargo build --verbose
     - name: Test
