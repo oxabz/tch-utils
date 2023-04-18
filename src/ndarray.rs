@@ -1,12 +1,12 @@
 use tch::Kind;
 
-pub trait TensorExt {
+pub trait NDATensorExt {
     fn to_ndarray(&self) -> ndarray::ArrayD<f32>;
     
     fn from_ndarray(array: ndarray::ArrayD<f32>) -> Self;
 }
 
-impl TensorExt for tch::Tensor {
+impl NDATensorExt for tch::Tensor {
     fn to_ndarray(&self) -> ndarray::ArrayD<f32> {
         let dims = self.size();
         let casted = self.to_kind(Kind::Float);

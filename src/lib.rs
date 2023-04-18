@@ -55,3 +55,4 @@ pub mod utils;
 pub mod color;
 #[cfg(feature = "ndarray")]
 pub mod ndarray;
+pub mod image;

@@ -7,7 +7,7 @@ use std::{path::{ PathBuf}, str::FromStr};
 use tch::Tensor;
 
 #[cfg(feature = "ndarray")]
-use crate::ndarray::TensorExt;
+use crate::ndarray::NDATensorExt;
 
 pub fn assert_eq_tensor(a: &Tensor, b: &Tensor) {
     assert_eq!(a.size(), b.size(), "Tensors must have the same shape");
