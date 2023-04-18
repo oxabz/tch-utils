@@ -53,3 +53,5 @@ pub mod noise;
 pub mod shapes;
 pub mod utils;
 pub mod color;
+#[cfg(feature = "ndarray")]
+pub mod ndarray;

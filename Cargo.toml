@@ -5,13 +5,14 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-doctest = false
-
 [features]
-default = ["rayon"]
+default = ["rayon", "ndarray"]
 rayon = ["dep:rayon"]
+ndarray = ["dep:ndarray", "dep:ndarray-npy"]
 
 [dependencies]
 tch = "0"
 rand = "0.8"
 rayon = { version = "1.5", optional = true }
+ndarray = { version = "0.15", optional = true }
+ndarray-npy = { version = "0.8", optional = true }
