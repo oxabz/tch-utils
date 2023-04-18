@@ -52,4 +52,4 @@ pub mod tensor_init;
 pub mod noise;
 pub mod shapes;
 pub mod utils;
-mod color;
+pub mod color;
