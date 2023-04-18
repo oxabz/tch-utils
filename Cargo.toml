@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["rayon", "ndarray"]
+default = ["rayon", "ndarray", "image"]
 rayon = ["dep:rayon"]
 ndarray = ["dep:ndarray", "dep:ndarray-npy"]
 image = ["dep:image"]
