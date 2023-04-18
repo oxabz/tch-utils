@@ -13,6 +13,10 @@ impl ImageTensorExt for Tensor {
     }
 
     fn from_image(image: image::DynamicImage) -> Self {
-        todo!()
+        let (width, height) = (image.width(), image.height());
+        let image = image.to_rgba32f();
+        let data = image.into_vec();
+        let tensor = Tensor::of_slice(&data);
+        tensor.reshape(&[4, height as i64, width as i64])
     }
 }
