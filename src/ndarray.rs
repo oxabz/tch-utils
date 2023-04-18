@@ -1,6 +1,6 @@
 use tch::Kind;
 
-trait TensorExt {
+pub trait TensorExt {
     fn to_ndarray(&self) -> ndarray::ArrayD<f32>;
     
     fn from_ndarray(array: ndarray::ArrayD<f32>) -> Self;
