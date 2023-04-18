@@ -308,13 +308,13 @@ mod test {
         )
         .unwrap();
 
-        assert_tensor_asset(&centered_circle, "assert-assets/shapes/centered_circle.pt");
-        assert_tensor_asset(&offset_circle, "assert-assets/shapes/offset_circle.pt");
-        assert_tensor_asset(&ellipse_, "assert-assets/shapes/ellipse.pt");
-        assert_tensor_asset(&rotated_ellipse, "assert-assets/shapes/rotated_ellipse.pt");
+        assert_tensor_asset(&centered_circle, "test-assets/shapes/centered_circle.pt");
+        assert_tensor_asset(&offset_circle, "test-assets/shapes/offset_circle.pt");
+        assert_tensor_asset(&ellipse_, "test-assets/shapes/ellipse.pt");
+        assert_tensor_asset(&rotated_ellipse, "test-assets/shapes/rotated_ellipse.pt");
         assert_tensor_asset(
             &centered_rotated_ellipse,
-            "assert-assets/shapes/centered_rotated_ellipse.pt",
+            "test-assets/shapes/centered_rotated_ellipse.pt",
         );
     }
 
@@ -349,9 +349,9 @@ mod test {
         tch::vision::image::save(&(&square * 255), "test-results/square.png").unwrap();
         tch::vision::image::save(&(&pentagon * 255), "test-results/pentagon.png").unwrap();
 
-        assert_tensor_asset(&triangle, "assert-assets/shapes/triangle.pt");
-        assert_tensor_asset(&square, "assert-assets/shapes/square.pt");
-        assert_tensor_asset(&pentagon, "assert-assets/shapes/pentagon.pt");
+        assert_tensor_asset(&triangle, "test-assets/shapes/triangle.pt");
+        assert_tensor_asset(&square, "test-assets/shapes/square.pt");
+        assert_tensor_asset(&pentagon, "test-assets/shapes/pentagon.pt");
     }
 
     #[test]
@@ -372,7 +372,7 @@ mod test {
         tch::vision::image::save(&(&hourglass_hull * 255), "test-results/hourglass_hull.png")
             .unwrap();
 
-        assert_tensor_asset(&square_hull, "assert-assets/shapes/square_hull.pt");
-        assert_tensor_asset(&hourglass_hull, "assert-assets/shapes/hourglass_hull.pt");
+        assert_tensor_asset(&square_hull, "test-assets/shapes/square_hull.pt");
+        assert_tensor_asset(&hourglass_hull, "test-assets/shapes/hourglass_hull.pt");
     }
 }
