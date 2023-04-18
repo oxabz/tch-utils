@@ -38,6 +38,13 @@ v
 1 
 (y)
 ```
+
+### Colors
+
+- Unless specified, the color channels are in the order [R, G, B]
+- The color channels are in the dim 1 of [N, C, H, W] tensor 
+- Unless specified, the color channels are in the range [0, 1]
+- Unless specified, the color channels use and expect Kind::Float
  */
 
 pub mod ops_2d;
@@ -45,3 +52,4 @@ pub mod tensor_init;
 pub mod noise;
 pub mod shapes;
 pub mod utils;
+mod color;
