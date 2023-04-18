@@ -348,7 +348,6 @@ mod test {
         tch::vision::image::save(&(&triangle * 255), "test-results/triangle.png").unwrap();
         tch::vision::image::save(&(&square * 255), "test-results/square.png").unwrap();
         tch::vision::image::save(&(&pentagon * 255), "test-results/pentagon.png").unwrap();
-
         assert_tensor_asset(&triangle, "test-assets/shapes/triangle.pt");
         assert_tensor_asset(&square, "test-assets/shapes/square.pt");
         assert_tensor_asset(&pentagon, "test-assets/shapes/pentagon.pt");
