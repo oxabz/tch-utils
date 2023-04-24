@@ -41,14 +41,14 @@ pub fn glcm(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option<&Te
     let rslice = (
         ..,
         ..,
-        if offset_y >= 0 { 0..offset_y } else { offset_y..height },
-        if offset_x >= 0 { 0..offset_x } else { offset_x..width },
+        if offset_y >= 0 { 0..(height-offset_y) } else { offset_y..height },
+        if offset_x >= 0 { 0..(width-offset_x) } else { offset_x..width },
     );
     let nslice = (
         ..,
         ..,
-        if offset_y >= 0 { offset_y..height } else { 0..-offset_y },
-        if offset_x >= 0 { offset_x..width } else { 0..-offset_x },
+        if offset_y >= 0 { offset_y..height } else { 0..(height-offset_y) },
+        if offset_x >= 0 { offset_x..width } else { 0..-(width-offset_x) },
     );    
     
     let glcm = Tensor::zeros(
@@ -66,3 +66,61 @@ pub fn glcm(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option<&Te
     &glcm / glcm.sum_dim_intlist(Some(&[1, 2][..]), false, Kind::Float)
 }
 
+#[cfg(test)]
+mod test {
+    use tch::Tensor;
+
+    use crate::utils::assert_eq_tensor;
+
+    #[test]
+    fn test_glcm_no_mask(){
+        let input = Tensor::of_slice(&[
+            1.0, 1.0, 2.0, 1.0,
+            2.0, 1.0, 1.0, 1.0,
+            3.0, 2.0, 3.0, 1.0,
+            3.0, 2.0, 1.0, 2.0
+        ]);
+
+        let expected = Tensor::of_slice(&[
+            0.25, 0.17, 0.0,
+            0.25, 0.0,  0.08,
+            0.08, 0.17, 0.0,
+        ]).view((1, 3, 3));
+        
+        let input = (input.view((1, 1, 4, 4))-1.0) / 3.0;
+        let glcm = super::glcm(&input, (1, 0), 3, None);
+
+        assert_eq_tensor(&glcm, &expected);
+    }
+
+    #[test]
+    fn test_glcm_mask(){
+        let input = Tensor::of_slice(&[
+            1.0, 1.0, 2.0, 1.0,
+            2.0, 1.0, 1.0, 1.0,
+            3.0, 2.0, 3.0, 1.0,
+            3.0, 2.0, 1.0, 2.0
+        ]);
+        let input = (input.view((1, 1, 4, 4))-1.0) / 3.0;
+
+        let mask = Tensor::of_slice(&[
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 0.0
+        ]).view((1, 1, 4, 4));
+
+        let expected = Tensor::of_slice(&[
+            3.0, 1.0, 0.0,
+            3.0, 0.0, 1.0,
+            1.0, 2.0, 0.0,
+        ]).view((1, 3, 3)) / 11.0;
+        
+        let glcm = super::glcm(&input, (1, 0), 3, Some(&mask));
+        
+        assert_eq_tensor(&glcm, &expected);
+
+    }
+
+    // TODO: Add test for more complex GLCMs
+}
