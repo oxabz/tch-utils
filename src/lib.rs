@@ -55,5 +55,6 @@ pub mod utils;
 pub mod color;
 #[cfg(feature = "ndarray")]
 pub mod ndarray;
+#[cfg(feature = "image")]
 pub mod image;
 pub mod glcm;
