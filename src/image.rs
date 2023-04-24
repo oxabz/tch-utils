@@ -1,3 +1,7 @@
+/*!
+Adds a trait to convert between `tch::Tensor` and `image::DynamicImage`.
+ */
+
 use image;
 use tch::Tensor;
 
