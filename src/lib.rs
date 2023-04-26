@@ -58,3 +58,4 @@ pub mod ndarray;
 #[cfg(feature = "image")]
 pub mod image;
 pub mod glcm;
+pub mod glrlm;
