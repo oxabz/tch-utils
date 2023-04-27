@@ -22,6 +22,16 @@ pub trait ImageTensorExt {
      */
     fn to_image(&self) -> image::DynamicImage;
     
+    /**
+    Converts a `image::DynamicImage` to a `tch::Tensor`.
+
+    # Arguments
+    - `image` - The `image::DynamicImage` to convert to a `tch::Tensor`.
+
+    # Returns
+    - The [C, H, W] `tch::Tensor` representation of the `image::DynamicImage`.
+    
+     */
     fn from_image(image: image::DynamicImage) -> Self;
 }
 
@@ -43,7 +53,7 @@ impl ImageTensorExt for Tensor {
             1 => self.repeat(&[3, 1, 1]),
             _ => unreachable!(),
         };
-        let tensor = tensor.permute(&[1, 2, 0]);
+        let tensor = tensor.permute(&[2, 1, 0]);
         match (channels, kind) {
             (1|2|3, Kind::Uint8)=>{
                 let data = Vec::<u8>::from(tensor);
@@ -72,6 +82,30 @@ impl ImageTensorExt for Tensor {
         let image = image.to_rgba32f();
         let data = image.into_vec();
         let tensor = Tensor::of_slice(&data);
-        tensor.reshape(&[4, height as i64, width as i64])
+        tensor.reshape(&[width as i64, height as i64, 4]).permute(&[2, 1, 0])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::utils::assert_eq_tensor;
+
+    use super::*;
+    use tch::{Tensor};
+
+    #[test]
+    fn test_image_tensor() {
+        let image = image::open("test-assets/convert/basic.png").unwrap();
+        let tensor = Tensor::from_image(image.clone());
+        let image2 = tensor.to_image();
+        let tensor2 = Tensor::from_image(image2.clone());
+        assert_eq_tensor(&tensor, &tensor2);
+        
+        
+        let image = image::open("test-assets/convert/cat.jpg").unwrap();
+        let tensor = Tensor::from_image(image.clone());
+        let image2 = tensor.to_image();
+        let tensor2 = Tensor::from_image(image2.clone());
+        assert_eq_tensor(&tensor, &tensor2);
     }
 }
