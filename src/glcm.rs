@@ -41,14 +41,14 @@ pub fn glcm(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option<&Te
     let rslice = (
         ..,
         ..,
-        if offset_y >= 0 { 0..(height-offset_y) } else { offset_y..height },
-        if offset_x >= 0 { 0..(width-offset_x) } else { offset_x..width },
+        (-offset_y).max(0)..(height-offset_y).min(height),
+        (-offset_x).max(0)..(width-offset_x).min(width),
     );
     let nslice = (
         ..,
         ..,
-        if offset_y >= 0 { offset_y..height } else { 0..(height-offset_y) },
-        if offset_x >= 0 { offset_x..width } else { 0..(width-offset_x) },
+        offset_y.max(0)..(height+offset_y).min(height),
+        offset_x.max(0)..(width+offset_x).min(width),
     );    
     
     let glcm = Tensor::zeros(
