@@ -105,6 +105,7 @@ mod tests {
         let image = image::open("test-assets/convert/cat.jpg").unwrap();
         let tensor = Tensor::from_image(image.clone());
         let image2 = tensor.to_image();
+        image2.to_rgb8().save("/tmp/cat.jpg").unwrap();
         let tensor2 = Tensor::from_image(image2.clone());
         assert_eq_tensor(&tensor, &tensor2);
     }
