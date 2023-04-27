@@ -48,7 +48,7 @@ pub fn glcm(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option<&Te
         ..,
         ..,
         if offset_y >= 0 { offset_y..height } else { 0..(height-offset_y) },
-        if offset_x >= 0 { offset_x..width } else { 0..-(width-offset_x) },
+        if offset_x >= 0 { offset_x..width } else { 0..(width-offset_x) },
     );    
     
     let glcm = Tensor::zeros(
