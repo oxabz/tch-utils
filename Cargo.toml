@@ -17,4 +17,4 @@ rand = "0.8"
 rayon = { version = "1.5", optional = true }
 ndarray = { version = "0.15", optional = true }
 ndarray-npy = { version = "0.8", optional = true }
-image = { version = "0.24", optional = true }
+image = { version = ">=0.20, <1.*", optional = true }
