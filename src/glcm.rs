@@ -63,7 +63,9 @@ pub fn glcm(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option<&Te
             slice += (reference_mask.i(rslice.clone()) * neighbor_mask.i(nslice.clone())).sum_dim_intlist(Some(&[1, 2, 3][..]), false, Kind::Float);
         }
     }
-    &glcm / glcm.sum_dim_intlist(Some(&[1, 2][..]), false, Kind::Float)
+    let len = glcm.sum_dim_intlist(Some(&[1, 2][..]), false, Kind::Float);
+    let len = len.view([-1, 1, 1]);
+    &glcm / len
 }
 
 #[cfg(test)]
