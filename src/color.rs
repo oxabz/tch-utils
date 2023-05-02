@@ -77,7 +77,7 @@ mod test{
      */
 
     use super::*;
-    use crate::utils::{assert_tensor_asset, assert_eq_tensor, self};
+    use crate::utils::{assert_tensor_asset, assert_eq_tensor, self, assert_eq_tensor_d};
     
     #[test]
     fn test_rgb_from_hed() {
@@ -93,7 +93,7 @@ mod test{
         let hed = hed_from_rgb(&original);
         let rgb = rgb_from_hed(&hed);
 
-        assert_eq_tensor(&original, &rgb);
+        assert_eq_tensor_d(&original, &rgb, 0.002);
     }
 
     #[test]

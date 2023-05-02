@@ -12,7 +12,13 @@ use crate::ndarray::NDATensorExt;
 pub fn assert_eq_tensor(a: &Tensor, b: &Tensor) {
     assert_eq!(a.size(), b.size(), "Tensors must have the same shape");
     let delta = f64::from((a - b).sum(tch::Kind::Float));
-    assert!(delta < 1e-5, "Tensors must be equal");
+    assert!(delta < 1e-5, "Tensors must be equal (delta: {})", delta);
+}
+
+pub fn assert_eq_tensor_d(a: &Tensor, b: &Tensor, max_delta: f64) {
+    assert_eq!(a.size(), b.size(), "Tensors must have the same shape");
+    let delta = f64::from((a - b).sum(tch::Kind::Float));
+    assert!(delta < max_delta, "Tensors must be equal (delta: {})", delta);
 }
 
 pub fn dirty_load(path: &str) -> Tensor {
