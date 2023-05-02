@@ -16,7 +16,7 @@ Convert a tensor of HED values to RGB values.
 Tensor - The tensor of RGB values [N, 3, H, W] with float values in the range [0, 1]
  */
 pub fn rgb_from_hed(hed: &Tensor) -> Tensor {
-    let rgb_from_hed = Tensor::of_slice(RGB_FROM_HED).view([3, 3]);
+    let rgb_from_hed = Tensor::of_slice(RGB_FROM_HED).view([3, 3]).to_device(hed.device());
     hed.transpose(1, 3).matmul(&rgb_from_hed).transpose(1, 3)
 }
 
@@ -30,7 +30,7 @@ Convert a tensor of RGB values to HED values.
 Tensor - The tensor of HED values [N, 3, H, W] with float values in the range [0, 1]
  */
 pub fn hed_from_rgb(rgb: &Tensor) -> Tensor {
-    let rgb_from_hed = Tensor::of_slice(RGB_FROM_HED).view([3, 3]);
+    let rgb_from_hed = Tensor::of_slice(RGB_FROM_HED).view([3, 3]).to_device(rgb.device());
     let hed_from_rgb = rgb_from_hed.inverse();
     rgb.transpose(1, 3).matmul(&hed_from_rgb).transpose(1, 3)
 }
