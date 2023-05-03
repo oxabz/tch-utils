@@ -47,7 +47,7 @@ Convert a tensor of RGB values to HSV values.
 - rgb: Tensor - The tensor of RGB values [N, 3, H, W] with float values in the range [0, 1]
 
 # Returns
-Tensor - The tensor of HSV values [N, 3, H, W] with float values in the range [0, 1]
+Tensor - The tensor of HSV values [N, 3, H, W] with float values in the range [0, 360]
  */
 pub fn hsv_from_rgb(rgb: &Tensor) -> Tensor {
     let (max /* [N, H, W] */, _) = rgb.max_dim(1, false);
