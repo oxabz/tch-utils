@@ -1,30 +1,10 @@
 use tch::Tensor;
 
-const RGB_FROM_HED : &[f32; 9] = &[
-    0.65, 0.70, 0.29,
-    0.07, 0.99, 0.11,
-    0.27, 0.57, 0.78
-];
-
 const HED_FROM_RGB: &[f32; 9] = &[
     1.8779827368521356592,    -1.007678686285564546,  -0.5561158181996246681,
     -0.065908062223563323342, 1.1347303724996625189,  -0.1355217986283711709,
     -0.60190736343928914578,  -0.4804141884970579594, 1.5735880719641925997
 ];
-
-/**
-Convert a tensor of HED values to RGB values.
-
-# Arguments
-- hed: Tensor - The tensor of HED values [N, 3, H, W] with float values in the range [0, 1]
-
-# Returns
-Tensor - The tensor of RGB values [N, 3, H, W] with float values in the range [0, 1]
- */
-pub fn rgb_from_hed(hed: &Tensor) -> Tensor {
-    let rgb_from_hed = Tensor::of_slice(RGB_FROM_HED).view([3, 3]).to_device(hed.device());
-    hed.transpose(1, 3).matmul(&rgb_from_hed).transpose(1, 3)
-}
 
 /**
 Convert a tensor of RGB values to HED values.
@@ -37,7 +17,12 @@ Tensor - The tensor of HED values [N, 3, H, W] with float values in the range [0
  */
 pub fn hed_from_rgb(rgb: &Tensor) -> Tensor {
     let hed_from_rgb = Tensor::of_slice(HED_FROM_RGB).view([3, 3]).to_device(rgb.device());
-    rgb.transpose(1, 3).matmul(&hed_from_rgb).transpose(1, 3)
+    let mut rgb = rgb.clamp_min(1e-6).log_();
+    rgb /= (1e-6f64).ln();
+    rgb.transpose_(1, 3)
+        .matmul(&hed_from_rgb)
+        .transpose_(1, 3)
+        .clamp_min_(0.0)
 }
 
 /**
@@ -61,6 +46,8 @@ pub fn hsv_from_rgb(rgb: &Tensor) -> Tensor {
     h += rgb.select(1, 2).eq_tensor(&max).to_kind(tch::Kind::Float)
         * ((rgb.select(1, 0) - rgb.select(1, 1)) / (&delta + 1e-5) + 4.0) * 60.0;
     h *= delta.ne(0).to_kind(tch::Kind::Float);
+    h += 360.0;
+    h.fmod_(360.0);
     let s  /* [N, H, W] */ = &delta / &max; 
     let s = s.where_scalarother(&max.not_equal(0), 0);
     let v  /* [N, H, W] */ = max; 
@@ -77,30 +64,31 @@ mod test{
      */
 
     use super::*;
-    use crate::utils::{assert_tensor_asset, assert_eq_tensor, self, assert_eq_tensor_d};
-    
-    #[test]
-    fn test_rgb_from_hed() {
-        let hed = utils::dirty_load("test-assets/colors/hed.npy");
-        let rgb = rgb_from_hed(&hed);
-        
-        assert_tensor_asset(&rgb, "test-assets/colors/original.npy");
-    }
+    use crate::utils::{assert_tensor_asset, self, assert_eq_tensor_d, assert_tensor_asset_d};
+    use tch::{index::*};
+
 
     #[test]
-    fn test_hed_hsv_back_and_forth() {
-        let original = utils::dirty_load("test-assets/colors/original.npy");
-        let hed = hed_from_rgb(&original);
-        let rgb = rgb_from_hed(&hed);
+    fn test_hed_from_rgb() {
+        let rgb = utils::dirty_load("test-assets/colors/example.jpg").unsqueeze(0).to_kind(tch::Kind::Float) / 255.0;
+        let hed = hed_from_rgb(&rgb);
+        let h = hed.i((..,0)).clamp_(0.0, 1.0) * 255;
+        let e = hed.i((..,1)).clamp_(0.0, 1.0) * 255 ;
+        let d = hed.i((..,2)).clamp_(0.0, 1.0) * 255;
 
-        assert_eq_tensor_d(&original, &rgb, 0.002);
+        tch::vision::image::save(&h, "test-assets/colors/example-h.png").expect("Failed to save asset");
+        tch::vision::image::save(&e, "test-assets/colors/example-e.png").expect("Failed to save asset");
+        tch::vision::image::save(&d, "test-assets/colors/example-d.png").expect("Failed to save asset");
     }
 
     #[test]
     fn test_hsv_from_rgb() {
         let rgb = utils::dirty_load("test-assets/colors/original.npy");
         let hsv = hsv_from_rgb(&rgb);
+        let mut h = hsv.i((..,0));
+        h /= 360.0;
         
-        assert_tensor_asset(&hsv, "test-assets/colors/hsv.npy");
+
+        assert_tensor_asset_d(&hsv, "test-assets/colors/hsv.npy", 0.002);
     }
 }
