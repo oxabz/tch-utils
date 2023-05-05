@@ -54,15 +54,15 @@ pub fn hsv_from_rgb(rgb: &Tensor) -> Tensor {
     let (min /* [N, H, W] */, _) = rgb.min_dim(1, false); 
     let delta /* [N, H, W] */ = &max - min; 
     let mut h  /* [N, H, W] */ = Tensor::zeros_like(&delta); 
-    h += rgb.select(1, 0).eq_tensor(&delta) 
-        * ((rgb.select(1, 1) - rgb.select(1, 2)) / &delta).fmod(6.0) * 60.0;
-    h += rgb.select(1, 1).eq_tensor(&delta) 
-        * ((rgb.select(1, 2) - rgb.select(1, 0)) / &delta + 2.0) * 60.0;
-    h += rgb.select(1, 2).eq_tensor(&delta) 
-        * ((rgb.select(1, 0) - rgb.select(1, 1)) / &delta + 4.0) * 60.0;
-    h = h.fmod(360.0);
+    h += rgb.select(1, 0).eq_tensor(&max).to_kind(tch::Kind::Float)
+        * ((rgb.select(1, 1) - rgb.select(1, 2)) / (&delta + 1e-5)).fmod(6.0) * 60.0;
+    h += rgb.select(1, 1).eq_tensor(&max).to_kind(tch::Kind::Float)
+        * ((rgb.select(1, 2) - rgb.select(1, 0)) / (&delta + 1e-5) + 2.0) * 60.0;
+    h += rgb.select(1, 2).eq_tensor(&max).to_kind(tch::Kind::Float)
+        * ((rgb.select(1, 0) - rgb.select(1, 1)) / (&delta + 1e-5) + 4.0) * 60.0;
+    h *= delta.ne(0).to_kind(tch::Kind::Float);
     let s  /* [N, H, W] */ = &delta / &max; 
-    let s = s.where_scalarother(&max.eq_tensor(&Tensor::zeros_like(&max)), 0);
+    let s = s.where_scalarother(&max.not_equal(0), 0);
     let v  /* [N, H, W] */ = max; 
 
     Tensor::stack(&[h, s, v], 1)
