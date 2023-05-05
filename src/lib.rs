@@ -60,3 +60,4 @@ pub mod image;
 pub mod glcm;
 pub mod glrlm;
 pub mod tensor_ext;
+pub mod gabor;
