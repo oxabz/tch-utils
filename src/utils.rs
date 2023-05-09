@@ -10,14 +10,12 @@ use tch::Tensor;
 use crate::ndarray::NDATensorExt;
 
 pub fn assert_eq_tensor(a: &Tensor, b: &Tensor) {
-    assert_eq!(a.size(), b.size(), "Tensors must have the same shape");
-    let delta = f64::from((a - b).sum(tch::Kind::Float));
-    assert!(delta < 1e-5, "Tensors must be equal (delta: {})", delta);
+    assert_eq_tensor_d(a, b, 1e-5);
 }
 
 pub fn assert_eq_tensor_d(a: &Tensor, b: &Tensor, max_delta: f64) {
     assert_eq!(a.size(), b.size(), "Tensors must have the same shape");
-    let delta = f64::from((a - b).sum(tch::Kind::Float));
+    let delta = f64::from((a - b).sum(tch::Kind::Float)).abs();
     assert!(delta < max_delta, "Tensors must be equal (delta: {})", delta);
 }
 
@@ -48,4 +46,9 @@ pub fn dirty_load(path: &str) -> Tensor {
 pub fn assert_tensor_asset(tensor: &Tensor, asset: &str) {
     let asset = dirty_load(asset);
     assert_eq_tensor(tensor, &asset);
+}
+
+pub fn assert_tensor_asset_d(tensor: &Tensor, asset: &str, max_delta: f64) {
+    let asset = dirty_load(asset);
+    assert_eq_tensor_d(tensor, &asset, max_delta);
 }
