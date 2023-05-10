@@ -105,6 +105,9 @@ height - The height of the image
 polygon - The polygon to generate the mask from coordinates in the form of [(x1, y1), (x2, y2), ...]
         where [0, 0] is the center of the image and the coordinates are in pixels
 options - The kind and device to cast the mask to
+
+> Warning: This function can cause a deadlock when called in a rayon thread that uses Mutex. (if the rayon feature is enabled)
+
  */
 pub fn polygon(
     width: usize,
@@ -185,6 +188,8 @@ height - The height of the image
 points - The points to generate the mask from coordinates in the form of [(x1, y1), (x2, y2), ...]
          where [0, 0] is the center of the image and the coordinates are in pixels
 options - The kind and device to cast the mask to
+
+> Warning: This function can cause a deadlock when called in a rayon thread that uses Mutex. (if the rayon feature is enabled)
  */
 pub fn convex_hull(
     width: usize,
