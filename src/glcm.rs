@@ -68,7 +68,7 @@ pub fn glcm(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option<&Te
     }
 
     if symmetric {
-        glcm+=glcm.transpose(1, 2);
+        glcm+=glcm.copy().transpose(1, 2);
     }
 
     let len = glcm.sum_dim_intlist(Some(&[1, 2][..]), false, Kind::Float);
