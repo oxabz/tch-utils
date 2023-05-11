@@ -14,6 +14,9 @@ The GLCM is a 2D histogram of the co-occurrence of pixel values at a given offse
     Internally the image will be cast from float to u8 and the value 255 is used to represent masked pixels.
 - mask: A mask of shape [N, 1, H, W] where N is the batch size, H and W are the height and width of the image.
     The values are expected to be in the range [0, 1]. If provided, the GLCM will only be computed for the pixels where the mask is 1.
+- symmetric: Whether to use a symmetric GLCM. If true, the GLCM will be computed for both the offset and its opposite.
+    The final GLCM will be the sum of the two GLCMs.
+    If false, only the GLCM for the offset will be computed.
 
 # Returns
 - Tensor of shape [N, num_shades, num_shades] where N is the batch size.
@@ -24,7 +27,7 @@ The GLCM is a 2D histogram of the co-occurrence of pixel values at a given offse
 - Time: O(num_shades²) if we have N * W * H threads.
 
  */
-pub fn glcm(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option<&Tensor>) -> Tensor {
+pub fn glcm(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option<&Tensor>, symmetric: bool) -> Tensor {
     let (offset_y, offset_x) = offset;
     let (offset_y, offset_x) = (offset_y as i64, offset_x as i64);
     let (batch_size, _, height, width) = image.size4().unwrap();
@@ -51,7 +54,7 @@ pub fn glcm(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option<&Te
         offset_x.max(0)..(width+offset_x).min(width),
     );    
     
-    let glcm = Tensor::zeros(
+    let mut glcm = Tensor::zeros(
         &[batch_size, num_shades as i64, num_shades as i64],
         (Kind::Float, image.device()),
     );
@@ -63,6 +66,11 @@ pub fn glcm(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option<&Te
             slice += (reference_mask.i(rslice.clone()) * neighbor_mask.i(nslice.clone())).sum_dim_intlist(Some(&[1, 2, 3][..]), false, Kind::Float);
         }
     }
+
+    if symmetric {
+        glcm+=glcm.transpose(1, 2);
+    }
+
     let len = glcm.sum_dim_intlist(Some(&[1, 2][..]), false, Kind::Float);
     let len = len.view([-1, 1, 1]);
     &glcm / len
@@ -90,7 +98,7 @@ mod test {
         ]).view((1, 3, 3));
         
         let input = (input.view((1, 1, 4, 4))-1.0) / 3.0;
-        let glcm = super::glcm(&input, (1, 0), 3, None);
+        let glcm = super::glcm(&input, (1, 0), 3, None, false);
 
         assert_eq_tensor(&glcm, &expected);
     }
@@ -118,7 +126,7 @@ mod test {
             1.0, 2.0, 0.0,
         ]).view((1, 3, 3)) / 11.0;
         
-        let glcm = super::glcm(&input, (1, 0), 3, Some(&mask));
+        let glcm = super::glcm(&input, (1, 0), 3, Some(&mask), false);
         
         assert_eq_tensor(&glcm, &expected);
 
