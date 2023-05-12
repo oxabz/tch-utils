@@ -70,9 +70,7 @@ pub fn glcm_gpu(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option
     // We then use an other 8 bits to encode the batch index we coulduse 15 bit for the batch but it would result in a gigabyte sized tensor.
     let num_shades = (num_shades + 1) as i64; // Number of shades + 1 for the masked pixels
     let group_size = ((GLCM_BINCOUNT_SIZE-1) / num_shades.pow(2)).min(batch_size);
-    println!("group_size: {}", group_size);
     let group_count = batch_size / group_size + (batch_size % group_size != 0) as i64;
-    println!("group_count: {}", group_count);
     let batch_idx = Tensor::arange(batch_size as i64, (Kind::Int64, image.device())).remainder(group_size);
     let batch_idx = batch_idx.view([-1, 1, 1, 1]);
     let pairs = batch_idx * num_shades.pow(2) + ref_img * num_shades as i64 + neigh_img;
