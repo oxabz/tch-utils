@@ -85,7 +85,7 @@ pub fn glcm_gpu(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option
             .map(|t| t.view([-1, num_shades as i64, num_shades as i64]))
             .collect::<Vec<_>>()
     };
-    let mut glcm = Tensor::cat(&glcms[..], 0).i((.., ..num_shades-1, ..num_shades-1));
+    let mut glcm = Tensor::cat(&glcms[..], 0).i((..batch_size, ..num_shades-1, ..num_shades-1));
 
     if symmetric {
         glcm+=glcm.copy().transpose(-1, -2);
