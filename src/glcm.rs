@@ -115,7 +115,7 @@ pub fn glcm_cpu(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option
         });
     let mut glcm = Tensor::stack(&glcm.collect::<Vec<_>>()[..], 0);
     if symmetric {
-        glcm+=glcm.copy().transpose(0, 1);
+        glcm+=glcm.copy().transpose(-1, 2);
     }
     let len = glcm.sum_dim_intlist(Some(&[1, 2][..]), false, Kind::Float);
     let len = len.view([-1, 1, 1]);
