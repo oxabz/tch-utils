@@ -12,7 +12,7 @@ ndarray = ["dep:ndarray", "dep:ndarray-npy"]
 image = ["dep:image"]
 
 [dependencies]
-tch = "0"
+tch = "0.11"
 rand = "0.8"
 rayon = { version = "1.5", optional = true }
 ndarray = { version = "0.15", optional = true }
