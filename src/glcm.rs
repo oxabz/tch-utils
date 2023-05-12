@@ -82,6 +82,7 @@ pub fn glcm_cpu(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option
 
     let (batch_size, _, height, width) = image.size4().unwrap();
     let (batch_size, height, width) = (batch_size as usize, height as usize, width as usize);
+    let device = image.device();
 
     let mut image = image * num_shades as f64;
     // If we use a mask we add 255 to the masked pixels so that they are not counted in the GLCM.
