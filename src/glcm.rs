@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use tch::{Kind, Tensor, index::*};
 
 const GLCM_BINCOUNT_SIZE: i64 = 0x00FF_FFFF;
@@ -71,6 +73,7 @@ pub fn glcm_gpu(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option
     let num_shades = (num_shades + 1) as i64; // Number of shades + 1 for the masked pixels
     let group_size = ((GLCM_BINCOUNT_SIZE-1) / num_shades.pow(2)).min(batch_size);
     let group_count = batch_size / group_size + (batch_size % group_size != 0) as i64;
+    let group_size = batch_size / group_count + (batch_size % group_count != 0) as i64;
     let batch_idx = Tensor::arange(batch_size as i64, (Kind::Int64, image.device())).remainder(group_size);
     let batch_idx = batch_idx.view([-1, 1, 1, 1]);
     let pairs = batch_idx * num_shades.pow(2) + ref_img * num_shades as i64 + neigh_img;
@@ -80,12 +83,13 @@ pub fn glcm_gpu(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option
         let pairs = pairs.tensor_split(group_count, 0);
         let bincount_size = num_shades.pow(2) * group_size;
         pairs.iter()
-            .map(|t| t.view([-1]))
-            .map(|t| t.bincount::<&Tensor>(None, bincount_size))
-            .map(|t| t.view([-1, num_shades as i64, num_shades as i64]))
+            .map(|t| (t.size()[0], t))
+            .map(|(s, t)| (s, t.view([-1])))
+            .map(|(s, t)| (s, t.bincount::<&Tensor>(None, bincount_size)))
+            .map(|(s,t)| t.view([s, num_shades as i64, num_shades as i64]))
             .collect::<Vec<_>>()
     };
-    let mut glcm = Tensor::cat(&glcms[..], 0).i((..batch_size, ..num_shades-1, ..num_shades-1));
+    let mut glcm = Tensor::cat(&glcms[..], 0).i((.., ..num_shades-1, ..num_shades-1));
 
     if symmetric {
         glcm+=glcm.copy().transpose(-1, -2);
@@ -144,13 +148,37 @@ pub fn glcm_cpu(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option
 
 #[cfg(test)]
 mod test {
-    use tch::{Tensor, Kind, index::*};
+    use tch::{Tensor, Kind, index::*, Device};
 
     use crate::utils::assert_eq_tensor;
 
+    const LEVELS: [u8; 4] = [64, 128, 192, 254];
+
+
     #[test]
-    fn bidouillage(){
-        
+    fn sanity_check_benchmark(){
+        let _ = tch::no_grad_guard();
+        let rand = Tensor::rand(&[350, 1, 64, 64], (Kind::Float, tch::Device::Cpu));
+
+        for level in LEVELS.iter(){
+            let start = std::time::Instant::now();
+            let glcm_cpu = super::glcm_cpu(&rand, (1, 0), *level, None, false);
+            for _ in 0..10{
+                let _ = super::glcm_cpu(&rand, (1, 0), *level, None, false);
+            }
+            let t_cpu = start.elapsed().as_millis();
+            let _ = super::glcm_gpu(&rand.to_device(Device::cuda_if_available()), (1, 0), *level, None, false);
+            let start = std::time::Instant::now();
+            let glcm_gpu = super::glcm_gpu(&rand.to_device(Device::cuda_if_available()), (1, 0), *level, None, false);
+            for _ in 0..10{
+                let _ = super::glcm_gpu(&rand.to_device(Device::cuda_if_available()), (1, 0), *level, None, false);
+            }
+            let t_gpu = start.elapsed().as_millis();
+            println!("{}", f32::from(glcm_cpu.sum(Kind::Float)));
+            println!("{}", f32::from(glcm_gpu.sum(Kind::Float)));
+            assert_eq_tensor(&glcm_cpu, &glcm_gpu.to(Device::Cpu));
+            println!("level: {}, cpu: {}, gpu: {}", level, t_cpu, t_gpu);   
+        }
     }
 
     #[test]
