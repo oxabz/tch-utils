@@ -105,7 +105,7 @@ pub fn glcm_cpu(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option
             let mut glcm = vec![0; num_shades as usize * num_shades as usize];
             for (y, x) in it.clone(){
                 let reference_shade = image[batch * batch_span + y * width + x] as usize;
-                let neighbor_shade = image[batch * batch_span + (y + offset_y as usize) * width + (x + offset_x as usize)] as usize;
+                let neighbor_shade = image[batch * batch_span + (y as i64 + offset_y) as usize * width + (x as i64 + offset_x) as usize] as usize;
                 if reference_shade >= num_shades as usize || neighbor_shade >= num_shades as usize{
                     continue;
                 }
@@ -113,9 +113,9 @@ pub fn glcm_cpu(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option
             }
             Tensor::of_slice(&glcm).view([num_shades as i64, num_shades as i64])
         });
-    let mut glcm = Tensor::stack(&glcm.collect::<Vec<_>>()[..], 0);
+    let mut glcm = Tensor::stack(&glcm.collect::<Vec<_>>()[..], 0).to_device(device);
     if symmetric {
-        glcm+=glcm.copy().transpose(-1, 2);
+        glcm+=glcm.copy().transpose(-1, -2);
     }
     let len = glcm.sum_dim_intlist(Some(&[1, 2][..]), false, Kind::Float);
     let len = len.view([-1, 1, 1]);
