@@ -15,7 +15,7 @@ pub fn assert_eq_tensor(a: &Tensor, b: &Tensor) {
 
 pub fn assert_eq_tensor_d(a: &Tensor, b: &Tensor, max_delta: f64) {
     assert_eq!(a.size(), b.size(), "Tensors must have the same shape");
-    let delta = f64::from((a - b).sum(tch::Kind::Float)).abs();
+    let delta = f64::from((a - b).abs().sum(tch::Kind::Float));
     assert!(delta < max_delta, "Tensors must be equal (delta: {})", delta);
 }
 

@@ -9,6 +9,8 @@ This module contains generation of GLRLM and features that can be extracted from
 
 use tch::{Tensor, index::*, Kind};
 
+const GLRLM_BINCOUNT_SIZE: i64 = 0x00FF_FFFF;
+
 
 /**
 Generate GLRLM from an image.
@@ -48,7 +50,7 @@ pub fn glrlm(
     if let Some(mask) = mask {
         assert!(mask.size() == image.size(), "mask must have the same size as image");
         let mask = mask.to_kind(Kind::Float);
-        let mask = (mask - 1.0) * - 255.0;
+        let mask = (mask - 1.0) * - (num_levels as f64);
         image += mask;
     }
     let image = image.clamp(0.0, 255.0).to_kind(tch::Kind::Uint8);
@@ -71,9 +73,8 @@ pub fn glrlm(
     let mut dest_slice = run_length.i((.., .., dy.max(0)..(height + dy).min(height), dx.max(0)..(width + dx).min(width)));
     let neigh_slice = run_length.i((.., .., (-dy).max(0)..(height - dy).min(height), (-dx).max(0)..(width - dx).min(width)));
     let mask_slice = mask.i((.., .., dy.max(0)..(height + dy).min(height), dx.max(0)..(width + dx).min(width)));
-    for i in 0..max_run_length-2{
+    for _ in 0..max_run_length-1{
         dest_slice.copy_(&(&neigh_slice * &mask_slice + 1));
-        println!("--------------- i: {} --------------", i);
     }
     
     // Generate a mask that only is true for the furthers point of a gray run 
@@ -89,22 +90,33 @@ pub fn glrlm(
     };
 
     let run_length = (run_length * mask).clamp(0, max_run_length).to_kind(Kind::Int);
-    
-    let glrlm = Tensor::zeros(&[batch_size, num_levels as i64, max_run_length], (Kind::Int64, image.device()));
-    for level in 0..num_levels{
-        let lmask = image.eq(level as i64);
-        for len in 1..=max_run_length{
-            let rmask = run_length.eq(len);
-            let count = (&lmask * rmask).sum_dim_intlist(Some(&[1, 2, 3][..]), false, Kind::Int);
-            glrlm.i((.., level as i64, len - 1)).copy_(&count);
-        }
-    }
+
+    let num_levels = num_levels as i64 + 1; // We add 1 to account for the masked pixels
+    let group_size = ((GLRLM_BINCOUNT_SIZE-1) / num_levels * max_run_length).min(batch_size);
+    let group_count = (batch_size as f64 / group_size as f64).ceil() as i64;
+    let group_size = (batch_size as f64 / group_count as f64).ceil() as i64;
+    let batch_idx = Tensor::arange(batch_size, (Kind::Int64, image.device())).remainder(group_size);
+    let batch_idx = batch_idx.view([-1,1,1,1]);
+    let pairs = &run_length + image.to_kind(Kind::Int64) * (max_run_length+1) + batch_idx * num_levels * (max_run_length+1);
+
+    let pairs = pairs.tensor_split(group_count, 0);
+    let bincount_size = num_levels * (max_run_length + 1) * group_size;
+    let glrlms = pairs.into_iter()
+        .map(|t|t.view(-1))
+        .map(|t|t.bincount::<&Tensor>(None, bincount_size))
+        .map(|t|t.view([group_size, num_levels, max_run_length + 1]))
+        .collect::<Vec<_>>();
+
+    let glrlm = Tensor::cat(&glrlms, 0);
+    let glrlm = glrlm.i((.., ..(num_levels-1), 1..));
     glrlm
 }
 
+
+
 #[cfg(test)]
 mod test {
-    use tch::{Tensor, Kind, Device, index::*};
+    use tch::{Tensor, Kind, Device,index::*};
     use crate::{glrlm::glrlm, utils::assert_eq_tensor};
 
     #[test]
@@ -113,13 +125,14 @@ mod test {
             2.0, 0.0, 0.0, 2.0, 0.0, 1.0, 1.0, 1.0, 3.0, 0.0, 0.0, 2.0, 0.0, 3.0, 3.0,
             2.0, 0.0, 0.0, 0.0, 2.0, 0.0, 3.0, 3.0, 3.0, 2.0, 1.0, 2.0, 1.0, 1.0, 2.0,
             3.0, 0.0, 2.0, 0.0, 0.0, 0.0, 0.0, 3.0, 1.0, 1.0, 2.0, 0.0, 0.0, 3.0, 3.0,
-        ]).view([1, 1, 3, 15]).to_kind(Kind::Float);
+        ]).view([1, 1, 3, 15]).to_kind(Kind::Float).repeat(&[500, 1, 1, 1]);
+
         let expected = Tensor::of_slice(&[
             4, 3, 1, 1,
             1, 2, 1, 0,
             10, 0, 0, 0,
             3, 2, 1, 0,
-        ]).view([1, 4, 4]);
+        ]).view([1, 4, 4]).repeat(&[500, 1, 1]);
         let image = image / 4.0;
         let glrlm = glrlm(&image, 4, 4, (1, 0), None);
         assert_eq_tensor(&glrlm, &expected);
@@ -172,13 +185,13 @@ mod test {
     const N: i64 = 100;
     #[test]
     fn sanity_check(){
-        let mut image = Tensor::zeros(&[N, 1, 10, 1000], (Kind::Float, Device::Cpu));
+        let mut image = Tensor::zeros(&[N, 1, 10, 1_000], (Kind::Float, Device::Cpu));
         drop(image.uniform_(0.0, 99.9999));
         image/=100.0;
-        let glrlm = glrlm(&(&image/2.0), 100, 10, (0, 1), None);
+        let glrlm = glrlm(&image, 100, 10, (0, 1), None);
         // Check that the sum of all the elements is equal to the number of pixels
         let i = Tensor::arange(10, (Kind::Int64, Device::Cpu)) + 1;
-        let i = i.view([1, -1]).repeat(&[100, 1]);
+        let i = i.view([1, 1, -1]);
         assert_eq!(i64::from((glrlm * i).sum(Kind::Int64)), N * 10_000, "The sum of all longest run lengths should be equal to the number of pixels");
     }
 }
