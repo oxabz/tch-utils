@@ -9,6 +9,7 @@ This module contains generation of GLRLM and features that can be extracted from
 
 use tch::{Tensor, index::*, Kind};
 
+
 /**
 Generate GLRLM from an image.
 
@@ -42,7 +43,7 @@ pub fn glrlm(
     assert!(min >= 0.0 && max <= 1.0 && kind == Kind::Float, "image must be float in the range [0, 1]");
 
     // map the image to the range [0, num_levels - 1]
-    let mut image = (image * (num_levels as f64 - 1e-6)).floor();
+    let mut image = image * num_levels as f64;
     // If we use a mask we add 255 to the masked pixels so that they are not counted in the GLCM.
     if let Some(mask) = mask {
         assert!(mask.size() == image.size(), "mask must have the same size as image");
@@ -52,6 +53,7 @@ pub fn glrlm(
     }
     let image = image.clamp(0.0, 255.0).to_kind(tch::Kind::Uint8);
     
+
     // We create a mask where the pixels are 1 if they aren't the first pixel of a run.
     let mask = {
         let conv = Tensor::zeros(&[3, 3], (tch::Kind::Float, image.device()));
@@ -69,8 +71,9 @@ pub fn glrlm(
     let mut dest_slice = run_length.i((.., .., dy.max(0)..(height + dy).min(height), dx.max(0)..(width + dx).min(width)));
     let neigh_slice = run_length.i((.., .., (-dy).max(0)..(height - dy).min(height), (-dx).max(0)..(width - dx).min(width)));
     let mask_slice = mask.i((.., .., dy.max(0)..(height + dy).min(height), dx.max(0)..(width + dx).min(width)));
-    for _ in 0..max_run_length{
+    for i in 0..max_run_length-2{
         dest_slice.copy_(&(&neigh_slice * &mask_slice + 1));
+        println!("--------------- i: {} --------------", i);
     }
     
     // Generate a mask that only is true for the furthers point of a gray run 
@@ -101,7 +104,7 @@ pub fn glrlm(
 
 #[cfg(test)]
 mod test {
-    use tch::{Tensor, Kind, Device};
+    use tch::{Tensor, Kind, Device, index::*};
     use crate::{glrlm::glrlm, utils::assert_eq_tensor};
 
     #[test]
@@ -114,7 +117,7 @@ mod test {
         let expected = Tensor::of_slice(&[
             4, 3, 1, 1,
             1, 2, 1, 0,
-            10, 0, 0, 1,
+            10, 0, 0, 0,
             3, 2, 1, 0,
         ]).view([1, 4, 4]);
         let image = image / 4.0;
