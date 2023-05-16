@@ -49,6 +49,7 @@ pub fn glrlm(
     // If we use a mask we add 255 to the masked pixels so that they are not counted in the GLCM.
     if let Some(mask) = mask {
         assert!(mask.size() == image.size(), "mask must have the same size as image");
+        image *= mask;
         let mask = mask.to_kind(Kind::Float);
         let mask = (mask - 1.0) * - (num_levels as f64);
         image += mask;

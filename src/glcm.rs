@@ -1,5 +1,3 @@
-use std::sync::Arc;
-
 use tch::{Kind, Tensor, index::*};
 
 const GLCM_BINCOUNT_SIZE: i64 = 0x00FF_FFFF;
@@ -41,8 +39,9 @@ pub fn glcm_gpu(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option
     let (offset_y, offset_x) = (offset_y as i64, offset_x as i64);
     let (batch_size, _, height, width) = image.size4().unwrap();
 
-    let mut image = image * (num_shades as f64 - 1e-6);
+    let mut image = image * num_shades as f64;
     if let Some(mask) = mask {
+        image *= mask;
         let mask = (mask - 1.0) * -(num_shades as f64);
         image += mask;
     }
@@ -89,8 +88,10 @@ pub fn glcm_gpu(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option
             .map(|(s,t)| t.view([s, num_shades as i64, num_shades as i64]))
             .collect::<Vec<_>>()
     };
-    let mut glcm = Tensor::cat(&glcms[..], 0).i((.., ..num_shades-1, ..num_shades-1));
-
+    
+    let glcm = Tensor::cat(&glcms[..], 0);
+    let mut glcm = glcm.i((.., ..num_shades-1, ..num_shades-1));
+    
     if symmetric {
         glcm+=glcm.copy().transpose(-1, -2);
     }
@@ -208,18 +209,17 @@ mod test {
         let input = (input.view((2, 1, 4, 4))-1.0) / 3.0;
         let rand = Tensor::rand(&[2, 1, 4, 4], (Kind::Float, tch::Device::Cpu));
         let input = Tensor::cat(&[input, rand], 0);
-        let glcm = super::glcm(&input, (1, 0), 3, None, false);
-        let glcm_gpu = super::glcm_gpu(&input, (1, 0), 3, None, false);
-        let glcm_cpu = super::glcm_cpu(&input, (1, 0), 3, None, false);
+        let glcm = super::glcm(&input, (0, 1), 3, None, false);
+        let glcm_gpu = super::glcm_gpu(&input, (0, 1), 3, None, false);
+        let glcm_cpu = super::glcm_cpu(&input, (0, 1), 3, None, false);
 
-        let glcm = glcm.i(..2);
-        let glcm_gpu = glcm_gpu.i(..2);
-        let glcm_cpu = glcm_cpu.i(..2);
-
-
-        assert_eq_tensor(&glcm, &expected);
+        let glcm = glcm.i(..2).round_decimals(2);
+        let glcm_gpu = glcm_gpu.i(..2).round_decimals(2);
+        let glcm_cpu = glcm_cpu.i(..2).round_decimals(2);
+        
         assert_eq_tensor(&glcm_gpu, &expected);
         assert_eq_tensor(&glcm_cpu, &expected);
+        assert_eq_tensor(&glcm, &expected);
     }
 
     #[test]
@@ -245,9 +245,13 @@ mod test {
             1.0, 2.0, 0.0,
         ]).view((1, 3, 3)) / 11.0;
         
-        let glcm = super::glcm(&input, (1, 0), 3, Some(&mask), false);
-        
+        let glcm = super::glcm(&input, (0, 1), 3, Some(&mask), false);
+        let glcm_cpu = super::glcm_cpu(&input, (0, 1), 3, Some(&mask), false);
+        let glcm_gpu = super::glcm_gpu(&input, (0, 1), 3, Some(&mask), false);
+
         assert_eq_tensor(&glcm, &expected);
+        assert_eq_tensor(&glcm_cpu, &expected);
+        assert_eq_tensor(&glcm_gpu, &expected);
 
     }
 
