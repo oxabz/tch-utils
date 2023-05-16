@@ -80,11 +80,10 @@ pub fn glcm_gpu(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option
     let glcms = {
         // We split the tensor into groups of size group_size.
         let pairs = pairs.tensor_split(group_count, 0);
-        let bincount_size = num_shades.pow(2) * group_size;
         pairs.iter()
             .map(|t| (t.size()[0], t))
             .map(|(s, t)| (s, t.view([-1])))
-            .map(|(s, t)| (s, t.bincount::<&Tensor>(None, bincount_size)))
+            .map(|(s, t)| (s, t.bincount::<&Tensor>(None, num_shades.pow(2) * s)))
             .map(|(s,t)| t.view([s, num_shades as i64, num_shades as i64]))
             .collect::<Vec<_>>()
     };

@@ -101,11 +101,11 @@ pub fn glrlm(
     let pairs = &run_length + image.to_kind(Kind::Int64) * (max_run_length+1) + batch_idx * num_levels * (max_run_length+1);
 
     let pairs = pairs.tensor_split(group_count, 0);
-    let bincount_size = num_levels * (max_run_length + 1) * group_size;
-    let glrlms = pairs.into_iter()
-        .map(|t|t.view(-1))
-        .map(|t|t.bincount::<&Tensor>(None, bincount_size))
-        .map(|t|t.view([group_size, num_levels, max_run_length + 1]))
+    let glrlms = pairs.iter()
+        .map(|t| (t.size()[0], t))
+        .map(|(s, t)| (s, t.view([-1])))
+        .map(|(s, t)| (s, t.bincount::<&Tensor>(None, num_levels * (max_run_length+1) * s)))
+        .map(|(s,t)| t.view([s, num_levels, max_run_length+1]))
         .collect::<Vec<_>>();
 
     let glrlm = Tensor::cat(&glrlms, 0);
@@ -117,7 +117,7 @@ pub fn glrlm(
 
 #[cfg(test)]
 mod test {
-    use tch::{Tensor, Kind, Device,index::*};
+    use tch::{Tensor, Kind, Device};
     use crate::{glrlm::glrlm, utils::assert_eq_tensor};
 
     #[test]
