@@ -40,12 +40,12 @@ pub fn hsv_from_rgb(rgb: &Tensor) -> Tensor {
     let delta /* [N, H, W] */ = &max - min; 
     let mut h  /* [N, H, W] */ = Tensor::zeros_like(&delta); 
     h += rgb.select(1, 0).eq_tensor(&max).to_kind(tch::Kind::Float)
-        * ((rgb.select(1, 1) - rgb.select(1, 2)) / (&delta + 1e-5)).fmod(6.0) * 60.0;
+        * ((rgb.select(1, 1) - rgb.select(1, 2)) / (&delta)).fmod(6.0) * 60.0;
     h += rgb.select(1, 1).eq_tensor(&max).to_kind(tch::Kind::Float)
-        * ((rgb.select(1, 2) - rgb.select(1, 0)) / (&delta + 1e-5) + 2.0) * 60.0;
+        * ((rgb.select(1, 2) - rgb.select(1, 0)) / (&delta) + 2.0) * 60.0;
     h += rgb.select(1, 2).eq_tensor(&max).to_kind(tch::Kind::Float)
-        * ((rgb.select(1, 0) - rgb.select(1, 1)) / (&delta + 1e-5) + 4.0) * 60.0;
-    h *= delta.ne(0).to_kind(tch::Kind::Float);
+        * ((rgb.select(1, 0) - rgb.select(1, 1)) / (&delta) + 4.0) * 60.0;
+    h = h.where_scalarother(&delta.not_equal(0), 0.0);
     h += 360.0;
     h.fmod_(360.0);
     let s  /* [N, H, W] */ = &delta / &max; 
