@@ -165,19 +165,6 @@ pub fn polygon(
     mask.to_kind(options.0).to_device(options.1)
 }
 
-fn convex_hull_segments(points: &[(f64, f64)]) -> Vec<Segment> {
-    let mut segments = vec![];
-    for i in 0..points.len() {
-        for j in i..points.len() {
-            let p1 = points[i];
-            let p2 = points[j];
-            let a = (p1.1 - p2.1) / (p1.0 - p2.0 + 1e-6); // Adding a small value to avoid division by 0 when the segment is vertical
-            let b = p1.1 - a * p1.0;
-            segments.push((p1, p2, a, b));
-        }
-    }
-    segments
-}
 
 /**
 Generate a mask of the convex hull of a set of points
@@ -197,52 +184,8 @@ pub fn convex_hull(
     points: &Vec<(f64, f64)>,
     options: (Kind, Device),
 ) -> Tensor {
-    let segments = convex_hull_segments(points);
-
-    #[cfg(feature = "rayon")]
-    let iter = (0..height).into_par_iter();
-    #[cfg(not(feature = "rayon"))]
-    let iter = (0..height).into_iter();
-
-    let mask = iter
-        .map(|y| {
-            let y = y as f64 - height as f64 / 2.0;
-            let intersections: Vec<_> = segments
-                .iter()
-                .filter(|segment| use_segment(**segment, y))
-                .map(|segment| {
-                    let ((x1, _), (x2, _), a, b) = segment;
-                    if a.abs() < 1e-6 {
-                        (*x1 + *x2) / 2.0
-                    } else {
-                        (y as f64 - b) / a
-                    }
-                })
-                .collect();
-            let max = intersections
-                .iter()
-                .max_by(|a, b| a.partial_cmp(b).unwrap())
-                .copied()
-                .unwrap_or(0.0);
-            let min = intersections
-                .iter()
-                .min_by(|a, b| a.partial_cmp(b).unwrap())
-                .copied()
-                .unwrap_or(width as f64);
-            let max = ((max.round() + width as f64 / 2.0) as usize).clamp(0, width - 1);
-            let min = ((min.round() + width as f64 / 2.0) as usize).clamp(0, width - 1);
-
-            let mut column = vec![0u8; width];
-            for i in min..max {
-                column[i] = 1u8;
-            }
-            column
-        })
-        .flatten()
-        .collect::<Vec<u8>>();
-
-    let mask = Tensor::of_slice(&mask).view([1, height as i64, width as i64]);
-    mask.to_kind(options.0).to_device(options.1)
+    let convex_hull = crate::utils::graham_scan(points);
+    polygon(width, height, &convex_hull, options)
 }
 
 #[cfg(test)]
