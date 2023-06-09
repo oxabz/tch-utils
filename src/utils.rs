@@ -33,6 +33,7 @@ pub fn graham_scan(points: &[(f64, f64)]) -> Vec<(f64, f64)> {
         .map(|(x, y)|((x, y), x - p.0, y - p.1))
         .map(|(p, dx, dy)| (p, (dx.powi(2) + dy.powi(2)).sqrt(), dx))
         .map(|(p, len, dot)| (p, len, - dot / len))
+        .filter(|(_, len, _)| *len > 0.0)
         .collect::<Vec<_>>();
 
     points.sort_by(|(_, al, aa), (_, bl, ba)| aa.partial_cmp(ba).unwrap().then(al.partial_cmp(bl).unwrap()));
