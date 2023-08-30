@@ -36,7 +36,7 @@ pub fn glcm(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option<&Te
 
 pub fn glcm_gpu(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option<&Tensor>, symmetric: bool) -> Tensor{
     let (offset_y, offset_x) = offset;
-    let (offset_y, offset_x) = (offset_y as i64, offset_x as i64);
+    let (offset_y, offset_x) = (offset_y, offset_x);
     let (batch_size, _, height, width) = image.size4().unwrap();
 
     let mut image = image * num_shades as f64;
@@ -73,9 +73,9 @@ pub fn glcm_gpu(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option
     let group_size = ((GLCM_BINCOUNT_SIZE-1) / num_shades.pow(2)).min(batch_size);
     let group_count = batch_size / group_size + (batch_size % group_size != 0) as i64;
     let group_size = batch_size / group_count + (batch_size % group_count != 0) as i64;
-    let batch_idx = Tensor::arange(batch_size as i64, (Kind::Int64, image.device())).remainder(group_size);
+    let batch_idx = Tensor::arange(batch_size, (Kind::Int64, image.device())).remainder(group_size);
     let batch_idx = batch_idx.view([-1, 1, 1, 1]);
-    let pairs = batch_idx * num_shades.pow(2) + ref_img * num_shades as i64 + neigh_img;
+    let pairs = batch_idx * num_shades.pow(2) + ref_img * num_shades + neigh_img;
 
     let glcms = {
         // We split the tensor into groups of size group_size.
@@ -84,7 +84,7 @@ pub fn glcm_gpu(image: &Tensor, offset: (i64, i64), num_shades: u8, mask: Option
             .map(|t| (t.size()[0], t))
             .map(|(s, t)| (s, t.view([-1])))
             .map(|(s, t)| (s, t.bincount::<&Tensor>(None, num_shades.pow(2) * s)))
-            .map(|(s,t)| t.view([s, num_shades as i64, num_shades as i64]))
+            .map(|(s,t)| t.view([s, num_shades, num_shades]))
             .collect::<Vec<_>>()
     };
     

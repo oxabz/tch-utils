@@ -142,7 +142,7 @@ pub fn polygon(
                     let r = if a.abs() < 1e-6 {
                         (*x1 + *x2) / 2.0
                     } else {
-                        (y as f64 - b) / a
+                        (y - b) / a
                     };
                     ((r + width as f64 / 2.0).round() as usize).clamp(0, width -1)
                 })
@@ -153,8 +153,8 @@ pub fn polygon(
             for i in (0..intersections.len()).step_by(2) {
                 let x1 = intersections[i];
                 let x2 = intersections[i + 1];
-                for x in x1..x2 {
-                    column[x] = 1u8;
+                for x in column.iter_mut().take(x2).skip(x1) {
+                    *x = 1u8;
                 }
             }
             column
@@ -181,7 +181,7 @@ options - The kind and device to cast the mask to
 pub fn convex_hull(
     width: usize,
     height: usize,
-    points: &Vec<(f64, f64)>,
+    points: &[(f64, f64)],
     options: (Kind, Device),
 ) -> Tensor {
     let convex_hull = crate::utils::graham_scan(points);

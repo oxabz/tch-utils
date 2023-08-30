@@ -95,7 +95,7 @@ pub fn perlin_noise_2d(
   tch::no_grad_guard();
   let (w, h) = shape;
   let (res_x, res_y) = res;
-  let (kind, device) = options.clone();
+  let (kind, device) = options;
 
   // Generate random directions [N, 2, H, W]
   let rng = rand::rngs::StdRng::seed_from_u64(seed);

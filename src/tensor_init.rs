@@ -40,7 +40,7 @@ pub fn position_tensor_2d(
   options: (tch::Kind, tch::Device),
 ) -> Tensor {
   let (w, h) = size;
-  let (kind, device) = options.clone();
+  let (kind, device) = options;
 
   let pos_x = Tensor::arange(w as i64, options);
   let pos_x = pos_x.repeat(&[h as i64, 1]);

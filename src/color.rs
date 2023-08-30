@@ -1,9 +1,10 @@
 use tch::Tensor;
 
+#[rustfmt::skip]
 const HED_FROM_RGB: &[f32; 9] = &[
-    1.8779827368521356592,    -1.007678686285564546,  -0.5561158181996246681,
-    -0.065908062223563323342, 1.1347303724996625189,  -0.1355217986283711709,
-    -0.60190736343928914578,  -0.4804141884970579594, 1.5735880719641925997
+     1.877_982_7,   -1.007_678_6,  -0.556_115_8,
+    -0.065_908_06,   1.134_730_3,  -0.135_521_8,
+    -0.601_907_4,   -0.480_414_18,  1.573_588
 ];
 
 /**
@@ -47,7 +48,7 @@ pub fn hsv_from_rgb(rgb: &Tensor) -> Tensor {
         * ((rgb.select(1, 0) - rgb.select(1, 1)) / (&delta) + 4.0) * 60.0;
     h = h.where_scalarother(&delta.not_equal(0), 0.0);
     h += 360.0;
-    h.fmod_(360.0);
+    let _ = h.fmod_(360.0);
     let s  /* [N, H, W] */ = &delta / &max; 
     let s = s.where_scalarother(&max.not_equal(0), 0);
     let v  /* [N, H, W] */ = max; 
@@ -64,8 +65,8 @@ mod test{
      */
 
     use super::*;
-    use crate::utils::{assert_tensor_asset, self, assert_eq_tensor_d, assert_tensor_asset_d};
-    use tch::{index::*};
+    use crate::utils::{self, assert_tensor_asset_d};
+    use tch::index::*;
 
 
     #[test]

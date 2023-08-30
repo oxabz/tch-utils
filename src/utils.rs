@@ -2,7 +2,7 @@
 Utilities for the utility crate :D
  */
 
-use std::{path::{ PathBuf}, str::FromStr};
+use std::{path::PathBuf, str::FromStr};
 
 use tch::Tensor;
 

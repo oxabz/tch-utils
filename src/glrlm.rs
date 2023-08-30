@@ -35,7 +35,7 @@ pub fn glrlm(
 ) -> Tensor {
     let (batch_size, _, height, width) = image.size4().unwrap();
     let (dx, dy) = direction;
-    assert!(num_levels >= 2 && num_levels <= 254, "num_levels must be in the range [2, 254]");
+    assert!((2..=254).contains(&num_levels), "num_levels must be in the range [2, 254]");
     assert!(max_run_length >= 1, "max_run_length must be at least 1");
     assert!(dx.abs() < 2 && dy.abs() < 2, "dx and dy must be in the range [-1, 1]");
     assert!(dx != 0 || dy != 0, "dx and dy cannot both be 0");
@@ -109,8 +109,7 @@ pub fn glrlm(
         .collect::<Vec<_>>();
 
     let glrlm = Tensor::cat(&glrlms, 0);
-    let glrlm = glrlm.i((.., ..(num_levels-1), 1..));
-    glrlm
+    glrlm.i((.., ..(num_levels-1), 1..))
 }
 
 
