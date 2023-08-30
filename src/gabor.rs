@@ -77,7 +77,8 @@ pub fn apply_gabor_filter(
     assert!(input.size()[1] == 1);
     let filters = (0..angle_count).flat_map(|i| {
         let theta = (i as f64) * std::f64::consts::PI / (angle_count as f64);
-        frequencies.iter().map(move |&lambda| {
+        frequencies.iter().map(move |&frequency| {
+            let lambda = 1.0 / frequency;
             gabor_filter(filter_size, theta, sigma, lambda, 0.0, 1.0, input.device())
         })
     }).collect::<Vec<_>>();
@@ -87,8 +88,9 @@ pub fn apply_gabor_filter(
 
 #[cfg(test)]
 mod test {
+    use tch::IndexOp;
+
     use super::*;
-    use tch::{index::*};
     
     #[test]
     fn test_gabor(){
