@@ -191,7 +191,7 @@ pub fn convex_hull(
 mod test {
     use super::*;
     use crate::utils::assert_tensor_asset;
-    use tch::{index::*, Device, Kind};
+    use tch::{Device, Kind};
 
     #[test]
     fn test_ellipse() {

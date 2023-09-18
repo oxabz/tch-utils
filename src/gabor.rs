@@ -81,7 +81,7 @@ pub fn apply_gabor_filter(
             let lambda = 1.0 / frequency;
             gabor_filter(filter_size, theta, sigma, lambda, 0.0, 1.0, input.device())
         })
-        .collect::<Vec<_>>();
+    }).collect::<Vec<_>>();
     let filters = Tensor::stack(&filters, 0).view([
         (angle_count * frequencies.len()) as i64,
         1,
