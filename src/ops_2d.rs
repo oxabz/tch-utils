@@ -28,8 +28,8 @@ assert!(dot.equal(&Tensor::of_slice(&[10.0, 20.0]).view([1, 1, 2, 1])));
 ```
  */
 pub fn dot_product_2d(a: &Tensor, b: &Tensor) -> Tensor {
-  let typ = a.kind();
-  (a * b).sum_dim_intlist(vec![1].as_slice(), true, typ)
+    let typ = a.kind();
+    (a * b).sum_dim_intlist(vec![1].as_slice(), true, typ)
 }
 
 /**
@@ -42,7 +42,7 @@ a: Tensor - The tensor to normalize [N, C, H, W]
 Tensor - The normalized tensor [N, C, H, W]
  */
 pub fn normalize_2d(a: &Tensor) -> Tensor {
-  a / (norm_2d(a) + 1e-8)
+    a / (norm_2d(a) + 1e-8)
 }
 
 /**
@@ -55,10 +55,10 @@ Compute the norm of vectors in 2d pictures. Equivalent to `linalg_norm` but fast
 Tensor - The norm of the vectors [N, 1, H, W]
  */
 pub fn norm_2d(t: &Tensor) -> Tensor {
-  let typ = t.kind();
-  (t.pow_tensor_scalar(2.0))
-    .sum_dim_intlist(vec![1].as_slice(), true, typ)
-    .sqrt()
+    let typ = t.kind();
+    (t.pow_tensor_scalar(2.0))
+        .sum_dim_intlist(vec![1].as_slice(), true, typ)
+        .sqrt()
 }
 
 /**
@@ -72,13 +72,13 @@ scale: &[f64] - The scale factors (lenght == C)
 Tensor - The scaled tensor [N, C, H, W]
  */
 pub fn scale_2d(t: &Tensor, scale: &[f64]) -> Tensor {
-  let typ = t.kind();
-  let device = t.device();
-  let scale = Tensor::of_slice(scale)
-    .to_kind(typ)
-    .to_device(device)
-    .view([1, scale.len() as i64, 1, 1]);
-  t * scale
+    let typ = t.kind();
+    let device = t.device();
+    let scale = Tensor::of_slice(scale)
+        .to_kind(typ)
+        .to_device(device)
+        .view([1, scale.len() as i64, 1, 1]);
+    t * scale
 }
 
 /**
@@ -92,16 +92,16 @@ angle: f64 - The angle of rotation in radians
 Tensor - The rotated tensor [N, 2, H, W]
  */
 pub fn rotate_2d(t: &Tensor, angle: f64) -> Tensor {
-  let typ = t.kind();
-  let device = t.device();
-  let cos = angle.cos();
-  let sin = angle.sin();
-  let rotation = Tensor::of_slice(&[cos, -sin, sin, cos])
-    .to_kind(typ)
-    .to_device(device)
-    .view([2, 2]);
-  
-  t.transpose(1,3).matmul(&rotation).transpose(1,3)
+    let typ = t.kind();
+    let device = t.device();
+    let cos = angle.cos();
+    let sin = angle.sin();
+    let rotation = Tensor::of_slice(&[cos, -sin, sin, cos])
+        .to_kind(typ)
+        .to_device(device)
+        .view([2, 2]);
+
+    t.transpose(1, 3).matmul(&rotation).transpose(1, 3)
 }
 
 /**
@@ -115,11 +115,11 @@ translation: &[f64] - The translation factors (lenght == C)
 Tensor - The translated tensor [N, C, H, W]
  */
 pub fn translate_2d(t: &Tensor, translation: &[f64]) -> Tensor {
-  let typ = t.kind();
-  let device = t.device();
-  let translation = Tensor::of_slice(translation)
-    .to_kind(typ)
-    .to_device(device)
-    .view([1, translation.len() as i64, 1, 1]);
-  t + translation
+    let typ = t.kind();
+    let device = t.device();
+    let translation = Tensor::of_slice(translation)
+        .to_kind(typ)
+        .to_device(device)
+        .view([1, translation.len() as i64, 1, 1]);
+    t + translation
 }

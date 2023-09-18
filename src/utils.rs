@@ -2,13 +2,12 @@
 Utilities for the utility crate :D
  */
 
-use std::{path::{ PathBuf}, str::FromStr};
+use std::{path::PathBuf, str::FromStr};
 
 use tch::Tensor;
 
 #[cfg(feature = "ndarray")]
 use crate::ndarray::NDATensorExt;
-
 
 pub fn graham_scan(points: &[(f64, f64)]) -> Vec<(f64, f64)> {
     let mut points = points.to_vec();
@@ -27,16 +26,20 @@ pub fn graham_scan(points: &[(f64, f64)]) -> Vec<(f64, f64)> {
         }
     }
     let p = points.remove(min_i);
-    
+
     let mut points = points
         .into_iter()
-        .map(|(x, y)|((x, y), x - p.0, y - p.1))
+        .map(|(x, y)| ((x, y), x - p.0, y - p.1))
         .map(|(p, dx, dy)| (p, (dx.powi(2) + dy.powi(2)).sqrt(), dx))
-        .map(|(p, len, dot)| (p, len, - dot / len))
+        .map(|(p, len, dot)| (p, len, -dot / len))
         .filter(|(_, len, _)| *len > 0.0)
         .collect::<Vec<_>>();
 
-    points.sort_by(|(_, al, aa), (_, bl, ba)| aa.partial_cmp(ba).unwrap().then(al.partial_cmp(bl).unwrap()));
+    points.sort_by(|(_, al, aa), (_, bl, ba)| {
+        aa.partial_cmp(ba)
+            .unwrap()
+            .then(al.partial_cmp(bl).unwrap())
+    });
 
     let mut hull = vec![p];
     for (p, _, _) in points {
@@ -55,8 +58,7 @@ pub fn graham_scan(points: &[(f64, f64)]) -> Vec<(f64, f64)> {
         hull.push(p);
     }
 
-    hull 
-    
+    hull
 }
 
 pub fn assert_eq_tensor(a: &Tensor, b: &Tensor) {
@@ -66,18 +68,24 @@ pub fn assert_eq_tensor(a: &Tensor, b: &Tensor) {
 pub fn assert_eq_tensor_d(a: &Tensor, b: &Tensor, max_delta: f64) {
     assert_eq!(a.size(), b.size(), "Tensors must have the same shape");
     let delta = f64::from((a - b).abs().sum(tch::Kind::Float));
-    assert!(delta < max_delta, "Tensors must be equal (delta: {})", delta);
+    assert!(
+        delta < max_delta,
+        "Tensors must be equal (delta: {})",
+        delta
+    );
 }
 
 pub fn dirty_load(path: &str) -> Tensor {
     let path = PathBuf::from_str(path).unwrap();
-    if !path.exists(){
+    if !path.exists() {
         panic!("Asset not found: {:?}", path)
     }
-    
-    return match path.extension(){
+
+    return match path.extension() {
         Some(ext) if ext == "pt" => Tensor::load(path).expect("Failed to load asset"),
-        Some(ext) if ext == "png" || ext == "jpeg" || ext == "jpg" => tch::vision::image::load(path).expect("Failed to load asset"),
+        Some(ext) if ext == "png" || ext == "jpeg" || ext == "jpg" => {
+            tch::vision::image::load(path).expect("Failed to load asset")
+        }
         Some(ext) if ext == "npy" => {
             #[cfg(feature = "ndarray")]
             {
@@ -89,7 +97,7 @@ pub fn dirty_load(path: &str) -> Tensor {
                 panic!("loading npy files requires ndarray feature")
             }
         }
-        _ => panic!("Asset file unsupported: {:?}", path)
+        _ => panic!("Asset file unsupported: {:?}", path),
     };
 }
 

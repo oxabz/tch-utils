@@ -2,14 +2,14 @@
 # Tch-utils - A collection of utilities for the tch-rs crate
 
 > *Note :* This crate is mostly intended for my own to collect some utilities I use in my projects.
-> It is not intended to be used by anyone else. However, if you find it useful, feel free to use it. 
+> It is not intended to be used by anyone else. However, if you find it useful, feel free to use it.
 
 ## Features
 - 2D operations : operations on tensor of shape [N, C, H, W] on each pixel
 - Tensor initialization : new way to initialize tensors
 - Noises : Generate noise tensors
 
-## Conventions 
+## Conventions
 
 ### Shapes
 - N : The number of samples
@@ -25,7 +25,7 @@
 *tensor of 2d vectors*
 Tensors of 2d vectors ([N, 2, H, W] & [2, H, W]) are in the form [y, x]
 
-### Axis 
+### Axis
 
 the y axis will always be top to bottom
 the x axis will always be left to right
@@ -35,29 +35,29 @@ the x axis will always be left to right
 |
 |
 v
-1 
+1
 (y)
 ```
 
 ### Colors
 
 - Unless specified, the color channels are in the order [R, G, B]
-- The color channels are in the dim 1 of [N, C, H, W] tensor 
+- The color channels are in the dim 1 of [N, C, H, W] tensor
 - Unless specified, the color channels are in the range [0, 1]
 - Unless specified, the color channels use and expect Kind::Float
  */
 
-pub mod ops_2d;
-pub mod tensor_init;
-pub mod noise;
-pub mod shapes;
-pub mod utils;
 pub mod color;
-#[cfg(feature = "ndarray")]
-pub mod ndarray;
-#[cfg(feature = "image")]
-pub mod image;
+pub mod gabor;
 pub mod glcm;
 pub mod glrlm;
+#[cfg(feature = "image")]
+pub mod image;
+#[cfg(feature = "ndarray")]
+pub mod ndarray;
+pub mod noise;
+pub mod ops_2d;
+pub mod shapes;
 pub mod tensor_ext;
-pub mod gabor;
+pub mod tensor_init;
+pub mod utils;

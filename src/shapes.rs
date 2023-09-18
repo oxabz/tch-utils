@@ -144,7 +144,7 @@ pub fn polygon(
                     } else {
                         (y as f64 - b) / a
                     };
-                    ((r + width as f64 / 2.0).round() as usize).clamp(0, width -1)
+                    ((r + width as f64 / 2.0).round() as usize).clamp(0, width - 1)
                 })
                 .collect();
             intersections.sort_by(|a, b| a.partial_cmp(b).unwrap());
@@ -164,7 +164,6 @@ pub fn polygon(
     let mask = Tensor::of_slice(&mask).view([1, height as i64, width as i64]);
     mask.to_kind(options.0).to_device(options.1)
 }
-
 
 /**
 Generate a mask of the convex hull of a set of points
@@ -191,8 +190,8 @@ pub fn convex_hull(
 #[cfg(test)]
 mod test {
     use super::*;
-    use tch::{Device, Kind};
     use crate::utils::assert_tensor_asset;
+    use tch::{index::*, Device, Kind};
 
     #[test]
     fn test_ellipse() {
