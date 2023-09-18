@@ -324,8 +324,8 @@ pub mod features {
         let sum_entropy = -(&pxpy * (&pxpy + 1e-6).log2()).sum_dim(-1); // [N]
 
         let sum_of_squares = {
-            let mut i = Tensor::arange(num_shades, tensor_option).view([1, 1, -1]);
-            i -= &u_x.view([-1, 1, 1]);
+            let i = Tensor::arange(num_shades, tensor_option).view([1, 1, -1]);
+            let mut i = i - &u_x.view([-1, 1, 1]);
             let i = i.square_();
 
             (i * glcm).sum_dims([-1, -2])
