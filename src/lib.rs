@@ -1,3 +1,5 @@
+#![allow(clippy::let_and_return)]
+
 /*!
 # Tch-utils - A collection of utilities for the tch-rs crate
 

@@ -11,7 +11,7 @@ impl NDATensorExt for tch::Tensor {
         let dims = self.size();
         let casted = self.to_kind(Kind::Float);
         let data = Vec::<f32>::from(&casted);
-        return match dims.len() {
+        match dims.len() {
             0 => ndarray::arr0(data[0]).into_dyn(),
             1 => ndarray::Array1::from(data).into_dyn(),
             2 => ndarray::Array2::from_shape_vec((dims[0] as usize, dims[1] as usize), data)
@@ -60,7 +60,7 @@ impl NDATensorExt for tch::Tensor {
             .unwrap()
             .into_dyn(),
             _ => panic!("Unsupported tensor shape"),
-        };
+        }
     }
 
     fn from_ndarray(array: ndarray::ArrayD<f32>) -> Self {

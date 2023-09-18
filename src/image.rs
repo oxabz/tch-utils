@@ -39,37 +39,23 @@ impl ImageTensorExt for Tensor {
     fn to_image(&self) -> image::DynamicImage {
         let size = self.size();
         let kind = self.kind();
-        assert!(
-            size.len() == 3,
-            "Tensor must be of shape [C, H, W] (got {:?})",
-            size
-        );
-        let [channels, height, width] = size[0..3] else {
-            unreachable!()
-        };
-        assert!(
-            channels <= 4 && channels >= 1,
-            "Tensor must have 4, 3, 2 or 1 channels (got {:?})",
-            channels
-        );
-        assert!(
-            kind != Kind::ComplexFloat && kind != Kind::ComplexDouble,
-            "Tensor must be non complex (got {:?})",
-            kind
-        );
-
+        assert!(size.len() == 3, "Tensor must be of shape [C, H, W] (got {:?})", size);
+        let [channels, height, width] = size[0..3] else { unreachable!()};
+        assert!((1..=4).contains(&channels), "Tensor must have 4, 3, 2 or 1 channels (got {:?})", channels);
+        assert!(kind != Kind::ComplexFloat && kind != Kind::ComplexDouble, "Tensor must be non complex (got {:?})", kind);
+        
         let tensor = match channels {
-            4 | 3 => self.shallow_clone(),
+            3..=4 => self.shallow_clone(),
             2 => {
                 let z = Tensor::zeros(&[1, height, width], (tch::Kind::Float, self.device()));
-                Tensor::cat(&[&z, &self], 0)
-            }
+                Tensor::cat(&[&z, self], 0)
+            },
             1 => self.repeat(&[3, 1, 1]),
             _ => unreachable!(),
         };
         let tensor = tensor.permute(&[2, 1, 0]);
         match (channels, kind) {
-            (1 | 2 | 3, Kind::Uint8) => {
+            (1..=3, Kind::Uint8)=>{
                 let data = Vec::<u8>::from(tensor);
                 image::DynamicImage::ImageRgb8(
                     image::ImageBuffer::from_raw(width as u32, height as u32, data).unwrap(),
@@ -77,11 +63,9 @@ impl ImageTensorExt for Tensor {
             }
             (4, Kind::Uint8) => {
                 let data = Vec::<u8>::from(tensor);
-                image::DynamicImage::ImageRgba8(
-                    image::ImageBuffer::from_raw(width as u32, height as u32, data).unwrap(),
-                )
-            }
-            (1 | 2 | 3, _) => {
+                image::DynamicImage::ImageRgba8(image::ImageBuffer::from_raw(width as u32, height as u32, data).unwrap())
+            },
+            (1..=3, _)=>{
                 let tensor = tensor.to_kind(Kind::Float);
                 let data = Vec::<f32>::from(tensor);
                 image::DynamicImage::ImageRgb32F(
