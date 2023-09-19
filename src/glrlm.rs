@@ -298,7 +298,7 @@ pub mod features {
             weighted_glrlm.copy_(&glrlm); // We reset the weighted GLRLM
             let i = Tensor::arange(num_levels, tensor_option) - (num_levels - 1) / 2;
             let i = i.unsqueeze(0).unsqueeze(-1).square_();
-            weighted_glrlm /= i.unsqueeze(-1);
+            weighted_glrlm /= i;
 
             let short_run_mid_gray_level_emphasis =
                 (&glrlm / run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
@@ -316,7 +316,7 @@ pub mod features {
             weighted_glrlm.copy_(&glrlm); // We reset the weighted GLRLM
             let j = Tensor::arange(num_levels, tensor_option) - (num_levels - 1) / 2;
             let j = j.unsqueeze(0).unsqueeze(-1).square_();
-            weighted_glrlm *= j.unsqueeze(-1);
+            weighted_glrlm *= j;
 
             let short_run_extreme_gray_level_emphasis =
                 (&glrlm / run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
