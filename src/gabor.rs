@@ -75,13 +75,15 @@ pub fn apply_gabor_filter(
 ) -> Tensor {
     assert!(input.size().len() == 4);
     assert!(input.size()[1] == 1);
-    let filters = (0..angle_count).flat_map(|i| {
-        let theta = (i as f64) * std::f64::consts::PI / (angle_count as f64);
-        frequencies.iter().map(move |&frequency| {
-            let lambda = 1.0 / frequency;
-            gabor_filter(filter_size, theta, sigma, lambda, 0.0, 1.0, input.device())
+    let filters = (0..angle_count)
+        .flat_map(|i| {
+            let theta = (i as f64) * std::f64::consts::PI / (angle_count as f64);
+            frequencies.iter().map(move |&frequency| {
+                let lambda = 1.0 / frequency;
+                gabor_filter(filter_size, theta, sigma, lambda, 0.0, 1.0, input.device())
+            })
         })
-    }).collect::<Vec<_>>();
+        .collect::<Vec<_>>();
     let filters = Tensor::stack(&filters, 0).view([
         (angle_count * frequencies.len()) as i64,
         1,

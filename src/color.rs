@@ -54,7 +54,7 @@ pub fn hsv_from_rgb(rgb: &Tensor) -> Tensor {
     h = h.where_scalarother(&delta.not_equal(0), 0.0);
     h += 360.0;
     let _ = h.fmod_(360.0);
-    let s  /* [N, H, W] */ = &delta / &max; 
+    let s  /* [N, H, W] */ = &delta / &max;
     let s = s.where_scalarother(&max.not_equal(0), 0);
     let v  /* [N, H, W] */ = max;
 

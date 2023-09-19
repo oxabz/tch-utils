@@ -98,7 +98,7 @@ pub fn glcm_gpu(
             .map(|t| (t.size()[0], t))
             .map(|(s, t)| (s, t.view([-1])))
             .map(|(s, t)| (s, t.bincount::<&Tensor>(None, num_shades.pow(2) * s)))
-            .map(|(s,t)| t.view([s, num_shades, num_shades]))
+            .map(|(s, t)| t.view([s, num_shades, num_shades]))
             .collect::<Vec<_>>()
     };
 

@@ -34,7 +34,10 @@ pub fn glrlm(
 ) -> Tensor {
     let (batch_size, _, height, width) = image.size4().unwrap();
     let (dx, dy) = direction;
-    assert!((2..=254).contains(&num_levels), "num_levels must be in the range [2, 254]");
+    assert!(
+        (2..=254).contains(&num_levels),
+        "num_levels must be in the range [2, 254]"
+    );
     assert!(max_run_length >= 1, "max_run_length must be at least 1");
     assert!(
         dx.abs() < 2 && dy.abs() < 2,
@@ -149,23 +152,22 @@ pub fn glrlm(
         .collect::<Vec<_>>();
 
     let glrlm = Tensor::cat(&glrlms, 0);
-    glrlm.i((.., ..(num_levels-1), 1..))
+    glrlm.i((.., ..(num_levels - 1), 1..))
 }
 
 /**
 Contains the feature computation of features that can be extracted from a GLRLM.
  */
 pub mod features {
-    use tch::{Tensor, Kind};
+    use tch::{Kind, Tensor};
 
     use crate::tensor_ext::TensorExt;
 
-    
-    /** 
+    /**
     Contains the features that can be extracted from a GLRLM.
-    Each field is a [N] tensor of the corresponding feature for each element of the batch. 
+    Each field is a [N] tensor of the corresponding feature for each element of the batch.
      */
-    pub struct GlrlmFeatures{
+    pub struct GlrlmFeatures {
         pub run_percentage: Tensor,
         pub run_length_mean: Tensor,
         pub run_length_variance: Tensor,
@@ -186,7 +188,6 @@ pub mod features {
         pub long_run_extreme_gray_level_emphasis: Tensor,
     }
 
-
     /**
     Extract a set of features from a GLRLM tensor.
 
@@ -195,7 +196,7 @@ pub mod features {
     - `pixel_count`: [N] tensor of the number of pixels in each image.
         Optional. If not provided it will be computed from the GLRLM. Which is accurate if the GLRLM's max_run_length is above the effective max run length.
         This only affects the computation of the run percentage feature.
-    
+
     # Returns
     A [GlrlmFeatures] struct containing the features.
     */
@@ -226,7 +227,7 @@ pub mod features {
         let (mut run_percentage, run_length_mean, run_length_variance) = {
             let mut jrlnv = &rlrnv * run_lengths;
 
-            let run_percentage =  1.0 / jrlnv.sum_dim(-1).inverse();
+            let run_percentage = 1.0 / jrlnv.sum_dim(-1).inverse();
             let run_length_mean = jrlnv.mean_dim(Some(&[-1][..]), false, Kind::Float);
             jrlnv -= &run_length_mean;
             let jrlnv = jrlnv.square_();
@@ -263,65 +264,73 @@ pub mod features {
         let mut weighted_glrlm = glrlm.copy();
 
         // Short & Long Run High Gray Level Emphasis [N]
-        let (
-            short_run_high_gray_level_emphasis,
-            long_run_high_gray_level_emphasis
-        ) = {
+        let (short_run_high_gray_level_emphasis, long_run_high_gray_level_emphasis) = {
             weighted_glrlm *= gray_levels2.unsqueeze(-1); // We weight the GLRLM by the square of the gray levels
 
-            let short_run_high_gray_level_emphasis = (&weighted_glrlm / run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
-            let long_run_high_gray_level_emphasis = (&weighted_glrlm * run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
-            
-            (short_run_high_gray_level_emphasis, long_run_high_gray_level_emphasis)
+            let short_run_high_gray_level_emphasis =
+                (&weighted_glrlm / run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
+            let long_run_high_gray_level_emphasis =
+                (&weighted_glrlm * run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
+
+            (
+                short_run_high_gray_level_emphasis,
+                long_run_high_gray_level_emphasis,
+            )
         };
-        
+
         // Short & Long Run Low Gray Level Emphasis [N]
-        let (
-            short_run_low_gray_level_emphasis,
-            long_run_low_gray_level_emphasis
-        ) = {
+        let (short_run_low_gray_level_emphasis, long_run_low_gray_level_emphasis) = {
             weighted_glrlm.copy_(&glrlm); // We reset the weighted GLRLM
             weighted_glrlm /= gray_levels2.unsqueeze(-1); // We weight the GLRLM by the inverse of the square of the gray levels
 
-            let short_run_low_gray_level_emphasis = (&glrlm / run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
-            let long_run_low_gray_level_emphasis = (&glrlm * run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
-            
-            (short_run_low_gray_level_emphasis, long_run_low_gray_level_emphasis)
+            let short_run_low_gray_level_emphasis =
+                (&glrlm / run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
+            let long_run_low_gray_level_emphasis =
+                (&glrlm * run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
+
+            (
+                short_run_low_gray_level_emphasis,
+                long_run_low_gray_level_emphasis,
+            )
         };
 
         // Short & Long Run Mid Gray Level Emphasis [N]
-        let (
-            short_run_mid_gray_level_emphasis,
-            long_run_mid_gray_level_emphasis
-        ) = {
+        let (short_run_mid_gray_level_emphasis, long_run_mid_gray_level_emphasis) = {
             weighted_glrlm.copy_(&glrlm); // We reset the weighted GLRLM
             let i = Tensor::arange(num_levels, tensor_option) - (num_levels - 1) / 2;
             let i = i.unsqueeze(0).unsqueeze(-1).square_();
             weighted_glrlm /= i.unsqueeze(-1);
 
-            let short_run_mid_gray_level_emphasis = (&glrlm / run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
-            let long_run_mid_gray_level_emphasis = (&glrlm * run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
-            
-            (short_run_mid_gray_level_emphasis, long_run_mid_gray_level_emphasis)
+            let short_run_mid_gray_level_emphasis =
+                (&glrlm / run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
+            let long_run_mid_gray_level_emphasis =
+                (&glrlm * run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
+
+            (
+                short_run_mid_gray_level_emphasis,
+                long_run_mid_gray_level_emphasis,
+            )
         };
 
         // Short & Long Run Extreme Gray Level Emphasis [N]
-        let (
-            short_run_extreme_gray_level_emphasis,
-            long_run_extreme_gray_level_emphasis
-        ) = {
+        let (short_run_extreme_gray_level_emphasis, long_run_extreme_gray_level_emphasis) = {
             weighted_glrlm.copy_(&glrlm); // We reset the weighted GLRLM
             let j = Tensor::arange(num_levels, tensor_option) - (num_levels - 1) / 2;
             let j = j.unsqueeze(0).unsqueeze(-1).square_();
             weighted_glrlm *= j.unsqueeze(-1);
 
-            let short_run_extreme_gray_level_emphasis = (&glrlm / run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
-            let long_run_extreme_gray_level_emphasis = (&glrlm * run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
-            
-            (short_run_extreme_gray_level_emphasis, long_run_extreme_gray_level_emphasis)
+            let short_run_extreme_gray_level_emphasis =
+                (&glrlm / run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
+            let long_run_extreme_gray_level_emphasis =
+                (&glrlm * run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
+
+            (
+                short_run_extreme_gray_level_emphasis,
+                long_run_extreme_gray_level_emphasis,
+            )
         };
 
-        GlrlmFeatures{
+        GlrlmFeatures {
             run_percentage,
             run_length_mean,
             run_length_variance,
