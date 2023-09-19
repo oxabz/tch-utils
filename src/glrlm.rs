@@ -248,7 +248,7 @@ pub mod features {
         // Emphasis features
 
         // Short Run Emphasis [N]
-        let short_run_emphasis = (&rlrnv / (&run_lengths2 + 0.5)).sum_dim(-1);
+        let short_run_emphasis = (&rlrnv / &run_lengths2).sum_dim(-1);
 
         // Long Run Emphasis [N]
         let long_run_emphasis = (&rlrnv * &run_lengths2).sum_dim(-1);
