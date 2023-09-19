@@ -215,7 +215,7 @@ pub mod features {
 
         let gray_levels = Tensor::arange(num_levels, tensor_option);
         let gray_levels = gray_levels.unsqueeze(0);
-        let gray_levels2 = gray_levels.square();
+        let gray_levels2 = gray_levels.square() + 0.5;
 
         // Gray Level Run-Length Vector [N, GLRLM_LEVELS]
         let glrlv = glrlm.sum_dim(-1);
@@ -248,10 +248,10 @@ pub mod features {
         // Emphasis features
 
         // Short Run Emphasis [N]
-        let short_run_emphasis = (&rlrnv * &run_lengths2).sum_dim(-1);
+        let short_run_emphasis = (&rlrnv / (&run_lengths2 + 0.5)).sum_dim(-1);
 
         // Long Run Emphasis [N]
-        let long_run_emphasis = (&rlrnv / &run_lengths2).sum_dim(-1);
+        let long_run_emphasis = (&rlrnv * &run_lengths2).sum_dim(-1);
 
         // Low Gray Level Run Emphasis [N]
         let low_gray_level_run_emphasis = (&glrlv / &gray_levels2).sum_dim(-1);
