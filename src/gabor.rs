@@ -95,11 +95,6 @@ pub fn apply_gabor_filter(
 
 #[cfg(test)]
 mod test {
-    use std::f64::consts::PI;
-
-    use crate::ndarray::NDATensorExt;
-    use ndarray_npy::write_npy;
-
     use super::*;
     use tch::index::*;
 
@@ -121,19 +116,6 @@ mod test {
                 print!("\x1b[48;2;{};{};{}m  ", gabor, gabor, gabor);
             }
             println!("\x1b[0m");
-        }
-        for angle in 0..=7 {
-            for frequencies in [0.5, 1.0, 2.0, 4.0, 6.0, 8.0] {
-                let lambda = 1.0 / frequencies;
-                let theta = (angle as f64) * PI / 8.0;
-                let gabor = gabor_filter(60, theta, 0.45, lambda, 0.0, 1.0, tch::Device::Cpu);
-                let gabor = gabor.to_ndarray();
-                write_npy(
-                    format!("test-results/gabor_{}_{}.npy", angle, frequencies),
-                    &gabor,
-                )
-                .unwrap();
-            }
         }
     }
 
