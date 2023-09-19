@@ -214,8 +214,8 @@ pub mod features {
         let run_lengths2 = run_lengths.square();
 
         let gray_levels = Tensor::arange(num_levels, tensor_option);
-        let gray_levels = gray_levels.unsqueeze(0);
-        let gray_levels2 = gray_levels.square() + 0.5;
+        let gray_levels = gray_levels.unsqueeze(0) + 0.5;
+        let gray_levels2 = gray_levels.square();
 
         // Gray Level Run-Length Vector [N, GLRLM_LEVELS]
         let glrlv = glrlm.sum_dim(-1);
