@@ -202,7 +202,7 @@ pub mod features {
     */
     pub fn glrlm_features(glrlm: &Tensor, pixel_count: Option<&Tensor>) -> GlrlmFeatures {
         // Normalize the GLRLM
-        let nruns = glrlm.sum_dims([-1, -2]);
+        let nruns = glrlm.sum_kdims([-1, -2]);
         let glrlm = glrlm / &nruns;
         let tensor_option = (glrlm.kind(), glrlm.device());
 
@@ -223,7 +223,7 @@ pub mod features {
         // Run-length Run Number Vector [N, GLRLM_MAX_LENGTH]
         let rlrnv = glrlm.sum_dim(-2);
 
-        // Run Percentage [N] & Run Length Mean [N]
+        // Run Percentage [N], Run Length Mean [N] & Run Length Variance [N]
         let (mut run_percentage, run_length_mean, run_length_variance) = {
             let mut jrlnv = &rlrnv * run_lengths;
 
@@ -235,9 +235,8 @@ pub mod features {
 
             (run_percentage, run_length_mean, run_length_variance)
         };
-
         if let Some(pixel_count) = pixel_count {
-            run_percentage = &nruns / pixel_count.to_kind(Kind::Float);
+            run_percentage = nruns.squeeze() / pixel_count.to_kind(Kind::Float);
         }
 
         // Gray Level Non-Uniformity [N]
