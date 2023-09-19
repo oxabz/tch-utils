@@ -228,12 +228,12 @@ pub mod features {
             let mut jrlnv = &rlrnv * run_lengths;
 
             let run_percentage = 1.0 / jrlnv.sum_dim(-1);
-            let run_length_mean = jrlnv.mean_dim(Some(&[-1][..]), false, Kind::Float);
+            let run_length_mean = jrlnv.mean_dim(Some(&[-1][..]), true, Kind::Float);
             jrlnv -= &run_length_mean;
             let jrlnv = jrlnv.square_();
             let run_length_variance = jrlnv.mean_dim(Some(&[-1][..]), false, Kind::Float);
 
-            (run_percentage, run_length_mean, run_length_variance)
+            (run_percentage, run_length_mean.squeeze(), run_length_variance)
         };
         if let Some(pixel_count) = pixel_count {
             run_percentage = nruns.squeeze() / pixel_count.to_kind(Kind::Float);
