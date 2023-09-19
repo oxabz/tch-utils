@@ -227,7 +227,7 @@ pub mod features {
         let (mut run_percentage, run_length_mean, run_length_variance) = {
             let mut jrlnv = &rlrnv * run_lengths;
 
-            let run_percentage = 1.0 / jrlnv.sum_dim(-1).inverse();
+            let run_percentage = 1.0 / jrlnv.sum_dim(-1);
             let run_length_mean = jrlnv.mean_dim(Some(&[-1][..]), false, Kind::Float);
             jrlnv -= &run_length_mean;
             let jrlnv = jrlnv.square_();
