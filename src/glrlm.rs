@@ -283,9 +283,9 @@ pub mod features {
             weighted_glrlm /= gray_levels2.unsqueeze(-1); // We weight the GLRLM by the inverse of the square of the gray levels
 
             let short_run_low_gray_level_emphasis =
-                (&glrlm / run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
+                (&weighted_glrlm / run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
             let long_run_low_gray_level_emphasis =
-                (&glrlm * run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
+                (&weighted_glrlm * run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
 
             (
                 short_run_low_gray_level_emphasis,
@@ -301,9 +301,9 @@ pub mod features {
             weighted_glrlm /= i;
 
             let short_run_mid_gray_level_emphasis =
-                (&glrlm / run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
+                (&weighted_glrlm / run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
             let long_run_mid_gray_level_emphasis =
-                (&glrlm * run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
+                (&weighted_glrlm * run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
 
             (
                 short_run_mid_gray_level_emphasis,
@@ -319,9 +319,9 @@ pub mod features {
             weighted_glrlm *= j;
 
             let short_run_extreme_gray_level_emphasis =
-                (&glrlm / run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
+                (&weighted_glrlm / run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
             let long_run_extreme_gray_level_emphasis =
-                (&glrlm * run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
+                (&weighted_glrlm * run_lengths2.unsqueeze(-2)).sum_dims([-1, -2]);
 
             (
                 short_run_extreme_gray_level_emphasis,
